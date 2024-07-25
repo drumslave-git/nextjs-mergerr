@@ -1,0 +1,5 @@
+services:
+  app:
+    volumes:
+      - ./tmp/inputs:/data/downloads/movie/Some movie #some video files for input
+      - ./tmp/results:/data/move

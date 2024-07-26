@@ -66,10 +66,8 @@ export function MergerrProvider({children, app}: {children: ReactNode, app: App}
   }, [app])
 
   const deleteMerge = useCallback((merge: Merge) => {
-    return fetch(`/api/app/${app.id}/merge/${merge.id}`, {method: 'DELETE'}).then(res => res.json()).then(data => {
-      listAppMerges()
-    })
-  }, [app, listAppMerges])
+    return fetch(`/api/app/${app.id}/merge/${merge.id}`, {method: 'DELETE'}).then(res => res.json())
+  }, [app])
 
   useEffect(() => {
     listAppMerges()

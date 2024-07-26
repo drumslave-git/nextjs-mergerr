@@ -10,6 +10,7 @@ import Select from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import {App} from '@prisma/client'
+import CheckIcon from '@mui/icons-material/Check'
 
 import {AppType} from "@/consts"
 
@@ -21,7 +22,7 @@ const defaultApp: App = {
   url: '',
 }
 
-export default function EditApp({app}: {app?: App}) {
+export default function EditApp({app}: { app?: App }) {
   const [appConfig, setAppConfig] = useState<App>(app || defaultApp)
   const [tested, setTested] = useState<boolean>(false)
   const [disableButtons, setDisableButtons] = useState<boolean>(true)
@@ -66,30 +67,38 @@ export default function EditApp({app}: {app?: App}) {
   }, [appConfig])
 
   return (
-    <Paper>
-      <Box sx={{p: 2}}>
-        <TextField label="Name" name="name" value={appConfig.name} onChange={onChange} />
-        <TextField label="Url" name="url" value={appConfig.url} onChange={onChange} />
-        <TextField label="Api Key" name="api_key" value={appConfig.api_key} onChange={onChange} />
-        <FormControl>
-          <InputLabel id="app-type-label">Type</InputLabel>
-          <Select
-            labelId="app-type-label"
-            value={appConfig.type}
-            label="Type"
-            name="type"
-            onChange={onChange}
-          >
-            {Object.values(AppType).map((type) => (
-              <MenuItem value={type} key={type}>
-                {type}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button variant="contained" color="secondary" onClick={onTest} disabled={disableButtons}>Test</Button>
+    <>
+      <Paper>
+        <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 2}}>
+          <TextField label="Name" name="name" value={appConfig.name} onChange={onChange} fullWidth/>
+          <FormControl fullWidth>
+            <InputLabel id="app-type-label">Type</InputLabel>
+            <Select
+              labelId="app-type-label"
+              value={appConfig.type}
+              label="Type"
+              name="type"
+              onChange={onChange}
+            >
+              {Object.values(AppType).map((type) => (
+                <MenuItem value={type} key={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 2}}>
+          <TextField label="Url" name="url" value={appConfig.url} onChange={onChange} fullWidth/>
+          <TextField label="Api Key" name="api_key" value={appConfig.api_key} onChange={onChange} fullWidth/>
+        </Box>
+      </Paper>
+      <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>
+        <Button variant="contained" color="secondary" onClick={onTest} disabled={disableButtons || tested}>
+          {tested ? <CheckIcon color="success"/> : 'Test'}
+        </Button>
         {tested && <Button variant="contained" color="primary" disabled={disableButtons} onClick={onSave}>Save</Button>}
       </Box>
-    </Paper>
+    </>
   )
 }

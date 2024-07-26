@@ -1,7 +1,8 @@
-import type { Metadata } from "next"
+import Box from "@mui/material/Box"
+import type {Metadata} from "next"
 import Link from "next/link"
 import {ReactNode} from "react"
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter'
+import {AppRouterCacheProvider} from '@mui/material-nextjs/v13-appRouter'
 import Button from "@mui/material/Button"
 import Paper from "@mui/material/Paper"
 import Typography from "@mui/material/Typography"
@@ -14,34 +15,38 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: ReactNode;
 }>) {
 
   return (
     <html lang="en">
-      <body>
-        <AppRouterCacheProvider>
-          <ClientTheme>
-              <Paper elevation={2} component="header" sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 1,
-                mb: 2,
-              }}>
-                <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
-                  Mergerr
-                </Typography>
-                <Link href="/" passHref>
-                  <Button>Home</Button>
-                </Link>
-              </Paper>
-            {children}
-          </ClientTheme>
-        </AppRouterCacheProvider>
-      </body>
+    <body>
+    <AppRouterCacheProvider>
+      <ClientTheme>
+        <Box sx={{maxWidth: 800, margin: "10px auto"}}>
+          <Paper elevation={2} component="header" sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 1,
+            mb: 2,
+          }}>
+            <Link href="/" style={{textDecoration: 'none'}}>
+              <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
+                Mergerr
+              </Typography>
+            </Link>
+            <Link href="/" passHref>
+              <Button>Home</Button>
+            </Link>
+          </Paper>
+          {children}
+        </Box>
+      </ClientTheme>
+    </AppRouterCacheProvider>
+    </body>
     </html>
   )
 }

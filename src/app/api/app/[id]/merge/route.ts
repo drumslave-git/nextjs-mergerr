@@ -89,14 +89,15 @@ export async function POST(req: Request, {params}: { params: { id: string } }) {
         }
       }).then(debug.bind(console))
     })
-    .on('progress', function (progress) {
-      debug('ffmpeg progress', progress)
-      prisma.merge.update({
+    .on('progress', async function (progress) {
+      const inputsCount = merge.inputs.length
+      debug('ffmpeg progress', progress.percent / inputsCount)
+      await prisma.merge.update({
         where: {
           id: merge.id
         },
         data: {
-          progress: progress.percent
+          progress: progress.percent / inputsCount
         }
       })
     })

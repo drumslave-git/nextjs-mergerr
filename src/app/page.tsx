@@ -1,5 +1,6 @@
 import AppIcon from "@/components/AppIcon"
-import { prisma } from "@/lib/prisma"
+import {prisma} from "@/lib/prisma"
+import Box from "@mui/material/Box"
 import Link from "next/link"
 import Paper from "@mui/material/Paper"
 import List from "@mui/material/List"
@@ -12,14 +13,15 @@ export default async function Home() {
   const apps = await prisma.app.findMany()
 
   return (
-    <Paper className="flex min-h-screen flex-col items-center justify-between p-24">
-      <List>
-        {apps.map((app) => (
-          <ListItem key={app.id}>
+    <>
+      <Paper className="flex min-h-screen flex-col items-center justify-between p-24">
+        <List>
+          {apps.map((app) => (
+            <ListItem key={app.id}>
               <ListItemIcon>
-                <AppIcon app={app} />
+                <AppIcon app={app}/>
               </ListItemIcon>
-              <ListItemText primary={app.name} />
+              <ListItemText primary={app.name}/>
               <Link href={`/apps/${app.id}`} passHref>
                 <Button color="primary">
                   View
@@ -35,15 +37,17 @@ export default async function Home() {
                   Delete
                 </Button>
               </Link>
-          </ListItem>
-        ))}
-      </List>
-
-      <Link href="/apps/new">
-        <Button color="primary">
-          Add App
-        </Button>
-      </Link>
-    </Paper>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+      <Box sx={{display: "flex", justifyContent: "center", marginY: 2}}>
+        <Link href="/apps/new">
+          <Button color="primary" variant="contained">
+            Add App
+          </Button>
+        </Link>
+      </Box>
+    </>
   )
 }

@@ -21,10 +21,16 @@ export default async function Home() {
               <ListItemIcon>
                 <AppIcon app={app}/>
               </ListItemIcon>
-              <ListItemText primary={app.name}/>
+              <ListItemText primary={
+                <Link href={app.public_url || app.url} target="_blank" rel="noreferrer" passHref>
+                  <Button color="secondary">
+                    {app.name}
+                  </Button>
+                </Link>
+              }/>
               <Link href={`/apps/${app.id}`} passHref>
                 <Button color="primary">
-                  View
+                  View Queue
                 </Button>
               </Link>
               <Link href={`/apps/${app.id}/edit`} passHref>

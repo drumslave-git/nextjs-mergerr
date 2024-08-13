@@ -15,6 +15,7 @@ model App {
   name    String   @unique
   type    String
   url     String   @unique
+  public_url String? @unique
   api_key String   @unique
   merges  Merge[]  @relation("AppMerges")
 }

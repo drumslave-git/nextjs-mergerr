@@ -26,10 +26,22 @@ const RadarrApiEndpoints: Record<string, ApiEndpoint> = {
   },
   manualImport: {
     uri: '/api/v3/manualimport',
+    params: {
+      filterExistingFiles: false,
+    }
   },
   targets: {
     uri: '/api/v3/movie',
   },
+  target: {
+    uri: '/api/v3/movie',
+    params: {
+      includeMovie: true,
+    },
+  },
+  targetPublicUri: {
+    uri: '/movie',
+  }
 }
 
 export const ApiEndpoints: {[key in AppType]: Record<string, ApiEndpoint>} = {

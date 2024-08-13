@@ -20,20 +20,44 @@ const defaultApp: App = {
   type: AppType.radarr,
   api_key: '',
   url: '',
+  public_url: '',
+}
+
+const REQUIRED_FIELDS: Array<keyof App> = ['name', 'type', 'url', 'api_key']
+
+const validate = (app: App) => {
+  const errors: Record<string, string> = {}
+  REQUIRED_FIELDS.forEach((field) => {
+    if (!app[field]) {
+      errors[field] = 'Field is required'
+    }
+  })
+  return errors
 }
 
 export default function EditApp({app}: { app?: App }) {
   const [appConfig, setAppConfig] = useState<App>(app || defaultApp)
   const [tested, setTested] = useState<boolean>(false)
   const [disableButtons, setDisableButtons] = useState<boolean>(true)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const router = useRouter()
 
   const onChange = useCallback((e: any) => {
+    setErrors(prev => {
+      const {[e.target.name]: _, ...rest} = prev
+      return rest
+    })
     setAppConfig((prev) => ({...prev, [e.target.name]: e.target.value}))
   }, [])
 
   const onTest = useCallback(() => {
+    const errors = validate(appConfig)
+    if (Object.keys(errors).length) {
+      setErrors(errors)
+      return
+    }
+    setDisableButtons(true)
     fetch('/api/app/test', {
       method: 'POST',
       body: JSON.stringify(appConfig),
@@ -43,9 +67,17 @@ export default function EditApp({app}: { app?: App }) {
       console.error(err)
       setTested(false)
     })
+      .finally(() => {
+        setDisableButtons(false)
+      })
   }, [appConfig])
 
   const onSave = useCallback(() => {
+    const errors = validate(appConfig)
+    if (Object.keys(errors).length) {
+      setErrors(errors)
+      return
+    }
     setDisableButtons(true)
     fetch('/api/app/save', {
       method: 'POST',
@@ -63,17 +95,20 @@ export default function EditApp({app}: { app?: App }) {
 
   useEffect(() => {
     setTested(false)
-    setDisableButtons(!appConfig.name || !appConfig.url || !appConfig.api_key)
+    const errors = validate(appConfig)
+    setDisableButtons(Object.keys(errors).length > 0)
   }, [appConfig])
 
   return (
     <>
       <Paper>
         <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 2}}>
-          <TextField label="Name" name="name" value={appConfig.name} onChange={onChange} fullWidth/>
+          <TextField required error={!!errors.name} label="Name" name="name" value={appConfig.name} onChange={onChange} fullWidth/>
           <FormControl fullWidth>
             <InputLabel id="app-type-label">Type</InputLabel>
             <Select
+              required
+              error={!!errors.type}
               labelId="app-type-label"
               value={appConfig.type}
               label="Type"
@@ -89,8 +124,9 @@ export default function EditApp({app}: { app?: App }) {
           </FormControl>
         </Box>
         <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 2}}>
-          <TextField label="Url" name="url" value={appConfig.url} onChange={onChange} fullWidth/>
-          <TextField label="Api Key" name="api_key" value={appConfig.api_key} onChange={onChange} fullWidth/>
+          <TextField required error={!!errors.url} label="Url" name="url" value={appConfig.url} onChange={onChange} fullWidth/>
+          <TextField error={!!errors.public_url} label="Public Url" name="public_url" value={appConfig.public_url} onChange={onChange} fullWidth/>
+          <TextField required error={!!errors.api_key} label="Api Key" name="api_key" value={appConfig.api_key} onChange={onChange} fullWidth/>
         </Box>
       </Paper>
       <Box sx={{display: 'flex', justifyContent: 'center', mt: 2}}>

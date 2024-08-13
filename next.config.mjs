@@ -9,7 +9,7 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: 'image.tmdb.org',
+                hostname: '*',
                 port: '',
                 pathname: '**',
             },
@@ -33,6 +33,6 @@ const nextConfig = {
             transform: "@mui/icons-material/{{ matches.[1] }}/{{member}}",
         },
     },
-};
+}
 
-export default withBundleAnalyzer(nextConfig);
+export default withBundleAnalyzer(nextConfig)

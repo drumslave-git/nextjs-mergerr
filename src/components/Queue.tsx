@@ -1,5 +1,6 @@
 'use client'
 
+import {MouseEvent} from "react"
 import CircularProgress from "@mui/material/CircularProgress"
 import Modal from "@mui/material/Modal"
 import Collapse from "@mui/material/Collapse"
@@ -9,7 +10,7 @@ import ListItemButton from "@mui/material/ListItemButton"
 import Paper from "@mui/material/Paper"
 import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
-import {App, Merge} from "@prisma/client"
+import {App} from "@prisma/client"
 import Image from "next/image"
 import {useCallback, useEffect, useMemo, useState} from "react"
 import List from "@mui/material/List"
@@ -20,6 +21,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
 import { FixedSizeList, ListChildComponentProps } from 'react-window'
 import { useMergerr } from "@/components/MergerrProvider"
+import {ApiEndpoints, AppType, MergeStatus} from "@/consts"
 
 const TargetsStyle = {
   position: 'absolute' as 'absolute',
@@ -37,16 +39,27 @@ const filterRecord = (record: Record<string, any>) => {
     record.statusMessages.filter((msg: any) => !!msg.messages.find((message: any) => message === 'Unable to parse file')).length > 1
 }
 
-const Buttons = ({ item, onMerge, onTargetChange }: { item: Record<string, any>, onMerge: (e: any) => void, onTargetChange: (e: any) => void }) => {
+const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Record<string, any>, onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void }) => {
   const {merges} = useMergerr()
 
-  const disabled = useMemo(() => {
-    return merges.find((merge: any) => merge.output.search(item.movie.cleanTitle) !== -1) !== undefined
+  const existingMerge = useMemo(() => {
+    return merges.find((merge: any) => merge.output.search(item.movie.cleanTitle) !== -1)
   }, [merges, item])
+
+  const onManualImportClick = useCallback((e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onManualImport(item, existingMerge)
+  }, [existingMerge, item, onManualImport])
+
+  if (existingMerge) {
+    return <Button variant="contained" color="secondary" onClick={onManualImportClick} disabled={existingMerge.status !== MergeStatus.done}>Import</Button>
+  }
+
 
   return (
     <>
-      <Button variant="contained" color={item.movie ? 'secondary' : 'primary'} onClick={onTargetChange} data-itemid={item.id} disabled={disabled}>
+      <Button variant="contained" color={item.movie ? 'secondary' : 'primary'} onClick={onTargetChange} data-itemid={item.id}>
         {item.movie ? 'Change Target' : 'Set Target'}
       </Button>
       {item.movie && (
@@ -56,33 +69,48 @@ const Buttons = ({ item, onMerge, onTargetChange }: { item: Record<string, any>,
           onClick={onMerge}
           data-downloadid={item.downloadId}
           data-itemid={item.id}
-          disabled={disabled}
         >Merge</Button>
       )}
     </>
   )
 }
 
-const Item = ({ item, downloads, onMerge, onTargetChange }: { item: Record<string, any>, downloads: Record<string, any>[], onMerge: (e: any) => void, onTargetChange: (e: any) => void }) => {
+const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualImport }: { item: Record<string, any>, openTarget: (id: string) => void, downloads: Record<string, any>[], onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void }) => {
   const [open, setOpen] = useState(false)
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
+    if (item.movie) {
+      openTarget(item.movie.foreignId)
+    } else {
+      onTargetChange(e)
+    }
+  }, [])
+
+  const handleToggleDownloads = useCallback((e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
     setOpen(v => !v)
   }, [])
 
+  const poster = useMemo(() => {
+    let poster = item.movie?.images.find((img: {coverType: string, remoteUrl: string}) => img.coverType === 'poster')?.remoteUrl
+    if (!poster) {
+      poster = item.movie?.images.find((img: {coverType: string, remoteUrl: string}) => img.coverType === 'screenshot')?.remoteUrl
+    }
+    return poster
+  }, [item])
+
   return (
     <>
-      <ListItemButton onClick={downloads.length > 0 ? handleClick : undefined} sx={{
+      <ListItemButton onClick={handleClick} href="" data-itemid={item.id} sx={{
         gap: 1,
       }}>
-        {item.movie && (
+        {poster && (
           <ListItemIcon>
-            <Image src={
-              item.movie.images.find((img: {coverType: string, remoteUrl: string}) => img.coverType === 'poster')?.remoteUrl
-            } alt={item.movie.title} width={100} height={150} />
+            <Image src={poster} alt={item.movie.title} width={100} height={150} style={{objectFit: 'contain'}} />
           </ListItemIcon>
         )}
-        <ListItemText inset={!!item.movie} primary={
+        <ListItemText inset={!!poster} primary={
           item.movie ? <>
             <Typography variant="caption">{item.movie.title}</Typography>
             &nbsp;
@@ -95,9 +123,11 @@ const Item = ({ item, downloads, onMerge, onTargetChange }: { item: Record<strin
         } />
         {downloads.length > 0 && (
           <>
-            <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} />
+            <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport} />
             <Chip label={`${downloads.length} files`} color="secondary" size="small" />
-            {open ? <ExpandLess /> : <ExpandMore />}
+            <Button variant="contained" color="info" onClick={handleToggleDownloads}>
+              {open ? <ExpandLess /> : <ExpandMore />}
+            </Button>
           </>
         )}
       </ListItemButton>
@@ -175,7 +205,7 @@ export default function Queue({ app }: { app: App }) {
   const [downloads, setDownloads] = useState<Record<string, Record<string, any>[]>>({})
   const [loading, setLoading] = useState<boolean>(true)
   const [targetsOpen, setTargetsOpen] = useState<null|number>(null)
-  const {merge, listAppMerges, merges} = useMergerr()
+  const {merge, listAppMerges} = useMergerr()
 
   useEffect(() => {
     fetch(`/api/app/${app.id}/queue`).then(res => res.json())
@@ -221,6 +251,17 @@ export default function Queue({ app }: { app: App }) {
     setTargetsOpen(null)
   }, [targetsOpen])
 
+  const openTarget = useCallback((foreignId: string) => {
+    window.open(`${app.public_url || app.url}${ApiEndpoints[app.type as AppType].targetPublicUri.uri}/${foreignId}`, '_blank')
+  }, [])
+
+  const onManualImport = useCallback((item: Record<string, any>, merge: any) => {
+    fetch(`/api/app/${app.id}/manualImport/${item.movieId}?output=${merge.output}`).then(res => res.json())
+      .then(data => {
+        console.log(data)
+      })
+  }, [records])
+
   if (loading) {
     return <div>Loading...</div>
   }
@@ -238,6 +279,8 @@ export default function Queue({ app }: { app: App }) {
                 downloads={downloads[item.downloadId] || []}
                 onMerge={onMerge}
                 onTargetChange={onTargetChange}
+                openTarget={openTarget}
+                onManualImport={onManualImport}
           />
         )}
       </List>

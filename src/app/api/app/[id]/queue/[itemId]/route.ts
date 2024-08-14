@@ -24,5 +24,5 @@ export async function DELETE(req: Request, { params }: { params: { id: string, i
     method: 'DELETE'
   })
 
-  return Response.json(await resp.json(), {status: resp.status})
+  return Response.json(resp.text(), {status: resp.status})
 }

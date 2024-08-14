@@ -67,5 +67,8 @@ export async function POST(req: Request, {params}: { params: { id: string, itemI
     }
   })
 
-  return Response.json(await resp.json(), {status: resp.status})
+  let respData = await resp.json()
+  const {apiKey, ...rest} = data
+
+  return Response.json({...respData, requestedData: rest}, {status: resp.status})
 }

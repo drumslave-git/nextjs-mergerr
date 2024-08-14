@@ -2,9 +2,9 @@
 
 import ManualImport from "@/components/ManualImport"
 import Targets from "@/components/Targets"
+import {ButtonGroup, Divider} from "@mui/material"
 import {MouseEvent} from "react"
 import Collapse from "@mui/material/Collapse"
-import Chip from "@mui/material/Chip"
 import Button from "@mui/material/Button"
 import ListItemButton from "@mui/material/ListItemButton"
 import Typography from "@mui/material/Typography"
@@ -95,9 +95,11 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
 
   return (
     <>
-      <ListItemButton onClick={handleClick} href="" data-itemid={item.id} sx={{
+      <ListItemButton onClick={handleClick} href="" data-itemid={item.id}
+                      sx={{
         gap: 1,
-      }}>
+      }}
+      >
         {poster && (
           <ListItemIcon>
             <Image src={poster} alt={item.movie.title} width={100} height={150} style={{objectFit: 'contain'}} />
@@ -114,28 +116,33 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
             {`${item.trackedDownloadState} • ${item.title}`}
           </Typography>
         } />
-        <Button variant="contained" color="error" onClick={onDelete} data-itemid={item.id}>
-          Delete
-        </Button>
-        {downloads.length > 0 && (
-          <>
-            <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport} />
-            <Chip label={`${downloads.length} files`} color="secondary" size="small" />
-            <Button variant="contained" color="info" onClick={handleToggleDownloads}>
-              {open ? <ExpandLess /> : <ExpandMore />}
-            </Button>
-          </>
-        )}
       </ListItemButton>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
+          <Divider />
             {downloads.map((download: any) => (
               <ListItem key={download.id} sx={{ pl: 4 }}>
                 <ListItemText primary={download.name} secondary={download.path} />
               </ListItem>
             ))}
+          <Divider />
         </List>
       </Collapse>
+      <ListItem>
+        <ButtonGroup fullWidth>
+          <Button variant="contained" color="error" onClick={onDelete} data-itemid={item.id}>
+            Delete
+          </Button>
+          {downloads.length > 0 && (
+            <>
+              <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport} />
+              <Button variant="contained" color="info" onClick={handleToggleDownloads}>
+                {downloads.length} files {open ? <ExpandLess /> : <ExpandMore />}
+              </Button>
+            </>
+          )}
+        </ButtonGroup>
+      </ListItem>
     </>
   )
 }

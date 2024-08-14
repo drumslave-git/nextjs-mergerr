@@ -1,3 +1,4 @@
+import Version from "@/components/Version"
 import Box from "@mui/material/Box"
 import type {Metadata} from "next"
 import Link from "next/link"
@@ -36,6 +37,7 @@ export default function RootLayout({
             <Link href="/" style={{textDecoration: 'none'}}>
               <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
                 Mergerr
+                <Version />
               </Typography>
             </Link>
             <Link href="/" passHref>

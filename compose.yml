@@ -4,14 +4,14 @@ services:
     container_name: mergerr
     ports:
       - 3000:3000
+      - 5555:5555
     volumes:
       - config:/app/config
       - ./src:/app/src
-      - ./prisma:/app/prisma
       - next:/app/.next
     environment:
       NEXT_WEBPACK_USEPOLLING: 1
-    command: yarn dev
+    command: npm run dev:all
     restart: always
 
 volumes:

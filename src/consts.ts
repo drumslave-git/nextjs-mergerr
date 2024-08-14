@@ -24,11 +24,22 @@ const RadarrApiEndpoints: Record<string, ApiEndpoint> = {
       includeMovie: true,
     },
   },
+  deleteItemFromQueue: {
+    uri: '/api/v3/queue',
+    params: {
+      removeFromClient: true,
+      blocklist: false,
+      skipRedownload: false
+    }
+  },
   manualImport: {
     uri: '/api/v3/manualimport',
     params: {
       filterExistingFiles: false,
     }
+  },
+  command: {
+    uri: '/api/v3/command',
   },
   targets: {
     uri: '/api/v3/movie',

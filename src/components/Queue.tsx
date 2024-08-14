@@ -1,14 +1,12 @@
 'use client'
 
+import ManualImport from "@/components/ManualImport"
+import Targets from "@/components/Targets"
 import {MouseEvent} from "react"
-import CircularProgress from "@mui/material/CircularProgress"
-import Modal from "@mui/material/Modal"
 import Collapse from "@mui/material/Collapse"
 import Chip from "@mui/material/Chip"
 import Button from "@mui/material/Button"
 import ListItemButton from "@mui/material/ListItemButton"
-import Paper from "@mui/material/Paper"
-import TextField from "@mui/material/TextField"
 import Typography from "@mui/material/Typography"
 import {App} from "@prisma/client"
 import Image from "next/image"
@@ -19,19 +17,8 @@ import ListItemText from "@mui/material/ListItemText"
 import ListItemIcon from "@mui/material/ListItemIcon"
 import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
-import { FixedSizeList, ListChildComponentProps } from 'react-window'
 import { useMergerr } from "@/components/MergerrProvider"
 import {ApiEndpoints, AppType, MergeStatus} from "@/consts"
-
-const TargetsStyle = {
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  p: 4,
-  width: '80dvw',
-  minWidth: 500,
-}
 
 const filterRecord = (record: Record<string, any>) => {
   return record.trackedDownloadState === 'importPending' &&
@@ -40,11 +27,15 @@ const filterRecord = (record: Record<string, any>) => {
 }
 
 const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Record<string, any>, onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void }) => {
-  const {merges} = useMergerr()
+  const {findMergeByCleanTitle, manualImportInProgress} = useMergerr()
 
   const existingMerge = useMemo(() => {
-    return merges.find((merge: any) => merge.output.search(item.movie.cleanTitle) !== -1)
-  }, [merges, item])
+    return findMergeByCleanTitle(item.movie.cleanTitle)
+  }, [item, findMergeByCleanTitle])
+
+  const importDisabled = useMemo(() => {
+    return existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
+  }, [existingMerge, item, manualImportInProgress])
 
   const onManualImportClick = useCallback((e: any) => {
     e.preventDefault()
@@ -53,7 +44,9 @@ const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Reco
   }, [existingMerge, item, onManualImport])
 
   if (existingMerge) {
-    return <Button variant="contained" color="secondary" onClick={onManualImportClick} disabled={existingMerge.status !== MergeStatus.done}>Import</Button>
+    return <Button variant="contained" color="secondary" onClick={onManualImportClick} disabled={importDisabled}>
+      {manualImportInProgress === item.movie.id ? 'Importing...' : 'Import'}
+    </Button>
   }
 
 
@@ -75,7 +68,7 @@ const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Reco
   )
 }
 
-const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualImport }: { item: Record<string, any>, openTarget: (id: string) => void, downloads: Record<string, any>[], onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void }) => {
+const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualImport, onDelete }: { item: Record<string, any>, openTarget: (id: string) => void, downloads: Record<string, any>[], onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void, onDelete: (e: any) => void }) => {
   const [open, setOpen] = useState(false)
 
   const handleClick = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
@@ -121,6 +114,9 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
             {`${item.trackedDownloadState} • ${item.title}`}
           </Typography>
         } />
+        <Button variant="contained" color="error" onClick={onDelete} data-itemid={item.id}>
+          Delete
+        </Button>
         {downloads.length > 0 && (
           <>
             <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport} />
@@ -144,68 +140,13 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
   )
 }
 
-const Targets = ({ app, onClose, onSelect }: { app: App, onClose: () => void, onSelect: (target: Record<string, any>) => void }) => {
-  const [targets, setTargets] = useState<Record<string, any>[]>([])
-  const [filteredTargets, setFilteredTargets] = useState<Record<string, any>[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [search, setSearch] = useState<string>('')
-
-  useEffect(() => {
-    fetch(`/api/app/${app.id}/targets`).then(res => res.json())
-      .then(data => {
-        setTargets(data)
-        setFilteredTargets(data)
-        setLoading(false)
-      })
-  }, [app])
-
-  useEffect(() => {
-    if (search.length < 3) {
-      setFilteredTargets(targets)
-    } else {
-      setFilteredTargets(targets.filter(target => target.title.toLowerCase().includes(search.toLowerCase())))
-    }
-  }, [targets, search])
-
-  return (
-    <Modal
-      open
-      onClose={onClose}
-    >
-      <Paper sx={TargetsStyle}>
-        <Typography id="modal-modal-title" variant="h6" component="h2">
-          Targets
-        </Typography>
-        {!loading && <TextField fullWidth label="Search" value={search} onChange={e => setSearch(e.target.value)} />}
-        {loading && <CircularProgress />}
-        <List>
-          {/* @ts-ignore */}
-          <FixedSizeList
-            height={400}
-            itemSize={50}
-            itemCount={filteredTargets.length}
-            overscanCount={5}
-          >
-            {({index, style}: ListChildComponentProps) => (
-              <ListItem key={filteredTargets[index].id} style={style}>
-                <ListItemButton onClick={() => onSelect(filteredTargets[index])}>
-                  <ListItemText primary={`${filteredTargets[index].title} (${filteredTargets[index].year})`} secondary={filteredTargets[index].path} />
-                </ListItemButton>
-              </ListItem>
-            )}
-          </FixedSizeList>
-        </List>
-      </Paper>
-    </Modal>
-  )
-}
-
 export default function Queue({ app }: { app: App }) {
   const [records, setRecords] = useState<Record<string, any>[]>([])
   const [downloads, setDownloads] = useState<Record<string, Record<string, any>[]>>({})
   const [loading, setLoading] = useState<boolean>(true)
   const [targetsOpen, setTargetsOpen] = useState<null|number>(null)
-  const {merge, listAppMerges} = useMergerr()
+  const [manualImportOpen, setManualImportOpen] = useState<Record<string, any> | null>(null)
+  const {merge, listAppMerges, manualImport} = useMergerr()
 
   useEffect(() => {
     fetch(`/api/app/${app.id}/queue`).then(res => res.json())
@@ -253,14 +194,26 @@ export default function Queue({ app }: { app: App }) {
 
   const openTarget = useCallback((foreignId: string) => {
     window.open(`${app.public_url || app.url}${ApiEndpoints[app.type as AppType].targetPublicUri.uri}/${foreignId}`, '_blank')
+  }, [app])
+
+  const onManualImport = useCallback((item: Record<string, any>) => {
+    setManualImportOpen(item)
   }, [])
 
-  const onManualImport = useCallback((item: Record<string, any>, merge: any) => {
-    fetch(`/api/app/${app.id}/manualImport/${item.movieId}?output=${merge.output}`).then(res => res.json())
+  const onManualImportClick = useCallback((file: Record<string, any>) => {
+    setManualImportOpen(null)
+    manualImport(file)
+  }, [manualImport])
+
+  const onDelete = useCallback((e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const itemId = e.target.dataset.itemid
+    fetch(`/api/app/${app.id}/queue/${itemId}`, {method: 'DELETE'}).then(res => res.json())
       .then(data => {
-        console.log(data)
+        setRecords(prev => prev.filter(item => item.id !== itemId))
       })
-  }, [records])
+  }, [app])
 
   if (loading) {
     return <div>Loading...</div>
@@ -281,10 +234,12 @@ export default function Queue({ app }: { app: App }) {
                 onTargetChange={onTargetChange}
                 openTarget={openTarget}
                 onManualImport={onManualImport}
+                onDelete={onDelete}
           />
         )}
       </List>
       {targetsOpen && <Targets app={app} onClose={() => setTargetsOpen(null)} onSelect={onTargetSelect} />}
+      {manualImportOpen && <ManualImport app={app} onClose={() => setManualImportOpen(null)} item={manualImportOpen} onClickImport={onManualImportClick} />}
     </>
   )
 }

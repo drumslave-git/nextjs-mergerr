@@ -1,12 +1,8 @@
-import AppIcon from "@/components/AppIcon"
+import Apps from "@/components/Apps"
 import {prisma} from "@/lib/prisma"
 import Box from "@mui/material/Box"
 import Link from "next/link"
 import Paper from "@mui/material/Paper"
-import List from "@mui/material/List"
-import ListItem from "@mui/material/ListItem"
-import ListItemText from "@mui/material/ListItemText"
-import ListItemIcon from "@mui/material/ListItemIcon"
 import Button from "@mui/material/Button"
 
 export default async function Home() {
@@ -15,37 +11,7 @@ export default async function Home() {
   return (
     <>
       <Paper className="flex min-h-screen flex-col items-center justify-between p-24">
-        <List>
-          {apps.map((app) => (
-            <ListItem key={app.id}>
-              <ListItemIcon>
-                <AppIcon app={app}/>
-              </ListItemIcon>
-              <ListItemText primary={
-                <Link href={app.public_url || app.url} target="_blank" rel="noreferrer" passHref>
-                  <Button color="secondary">
-                    {app.name}
-                  </Button>
-                </Link>
-              }/>
-              <Link href={`/apps/${app.id}`} passHref>
-                <Button color="primary">
-                  View Queue
-                </Button>
-              </Link>
-              <Link href={`/apps/${app.id}/edit`} passHref>
-                <Button color="secondary">
-                  Edit
-                </Button>
-              </Link>
-              <Link href={`/apps/${app.id}/delete`} passHref>
-                <Button color="error">
-                  Delete
-                </Button>
-              </Link>
-            </ListItem>
-          ))}
-        </List>
+        <Apps />
       </Paper>
       <Box sx={{display: "flex", justifyContent: "center", marginY: 2}}>
         <Link href="/apps/new">

@@ -1,6 +1,6 @@
 {
   "name": "nextjs-mergerr",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +12,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "dev:all": "concurrently \"npm run dev\" \"npm run db:studio\"",
-    "start:all": "concurrently \"npm run start\" \"npm run db:studio\""
+    "start:all": "npm run build && concurrently \"npm run start\" \"npm run db:studio\""
   },
   "dependencies": {
     "concurrently": "^8.2.2",

@@ -231,7 +231,7 @@ export default function Queue({ app }: { app: App }) {
     const itemId = e.target.dataset.itemid
     fetch(`/api/app/${app.id}/queue/${itemId}`, {method: 'DELETE'}).then(res => res.json())
       .then(data => {
-        setRecords(prev => prev.filter(item => item.id !== itemId))
+        setRecords(prev => prev.filter(item => item.id.toString() !== itemId))
       })
   }, [app])
 

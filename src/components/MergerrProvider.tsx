@@ -76,7 +76,6 @@ export function MergerrProvider({children, app}: {children: ReactNode, app: App}
   }, [app])
 
   const findMergeByPath = useCallback((path: string) => {
-    console.log(merges, path)
     return merges.find(merge => merge.output === path) || null
   }, [merges])
 

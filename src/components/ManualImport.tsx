@@ -8,14 +8,14 @@ import { App } from "@prisma/client"
 import {useEffect, useMemo, useState} from "react"
 
 const ManualImport = ({app, onClose, item, onClickImport}: { app: App, onClose: () => void, item: Record<string, any>, onClickImport: (file: Record<string, any>) => void }) => {
-  const {findMergeByCleanTitle} = useMergerr()
+  const {findMergeByPath} = useMergerr()
   const [files, setFiles] = useState<Record<string, any>[]>([])
   const [target, setTarget] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
 
   const merge = useMemo(() => {
-    return findMergeByCleanTitle(item.movie.cleanTitle)
-  }, [item, findMergeByCleanTitle])
+    return findMergeByPath(item.mergerrOutputFile.path)
+  }, [item, findMergeByPath])
 
   useEffect(() => {
     if (!merge) {

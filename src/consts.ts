@@ -7,6 +7,7 @@ export enum AppType {
 type ApiEndpoint = {
   uri: string
   params?: Record<string, any>
+  filterMergable?: (item: any) => boolean
 }
 
 const RadarrApiEndpoints: Record<string, ApiEndpoint> = {
@@ -22,6 +23,11 @@ const RadarrApiEndpoints: Record<string, ApiEndpoint> = {
       pageSize: 100,
       includeUnknownMovieItems: true,
       includeMovie: true,
+    },
+    filterMergable: (item) => {
+      return item.trackedDownloadState === 'importPending' &&
+        item.trackedDownloadStatus === 'warning' &&
+        item.statusMessages.filter((msg: any) => !!msg.messages.find((message: any) => message === 'Unable to parse file')).length > 1
     },
   },
   deleteItemFromQueue: {

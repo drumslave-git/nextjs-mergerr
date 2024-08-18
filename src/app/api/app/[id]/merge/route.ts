@@ -11,10 +11,11 @@ const debug = (...args: any[]) => {
 
 export async function POST(req: Request, {params}: { params: { id: string } }) {
   const data = await req.json()
-  const output = path.join(data.output.path, data.output.name + '.' + data.output.extension)
-  if (!fs.existsSync(data.output.path)) {
-    fs.mkdirSync(data.output.path, {recursive: true})
+  const output = path.join(data.output.path, data.output.name + '.mkv')
+  if (fs.existsSync(data.output.path)) {
+    fs.rmSync(data.output.path, {recursive: true})
   }
+  fs.mkdirSync(data.output.path, {recursive: true})
   let merge = await prisma.merge.findUnique({
     where: {
       output
@@ -91,13 +92,13 @@ export async function POST(req: Request, {params}: { params: { id: string } }) {
     })
     .on('progress', async function (progress) {
       const inputsCount = merge.inputs.length
-      debug('ffmpeg progress', progress.percent / inputsCount)
+      debug('ffmpeg progress', progress.percent || 0 / inputsCount)
       await prisma.merge.update({
         where: {
           id: merge.id
         },
         data: {
-          progress: progress.percent / inputsCount
+          progress: progress.percent || 0 / inputsCount
         }
       })
     })

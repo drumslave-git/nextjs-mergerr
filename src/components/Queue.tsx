@@ -3,6 +3,7 @@
 import ManualImport from "@/components/ManualImport"
 import Targets from "@/components/Targets"
 import {ButtonGroup, Divider} from "@mui/material"
+import Chip from "@mui/material/Chip"
 import {MouseEvent} from "react"
 import Collapse from "@mui/material/Collapse"
 import Button from "@mui/material/Button"
@@ -20,18 +21,12 @@ import ExpandMore from "@mui/icons-material/ExpandMore"
 import { useMergerr } from "@/components/MergerrProvider"
 import {ApiEndpoints, AppType, MergeStatus} from "@/consts"
 
-const filterRecord = (record: Record<string, any>) => {
-  return record.trackedDownloadState === 'importPending' &&
-    record.trackedDownloadStatus === 'warning' &&
-    record.statusMessages.filter((msg: any) => !!msg.messages.find((message: any) => message === 'Unable to parse file')).length > 1
-}
-
 const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Record<string, any>, onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void }) => {
-  const {findMergeByCleanTitle, manualImportInProgress} = useMergerr()
+  const {findMergeByPath, manualImportInProgress} = useMergerr()
 
   const existingMerge = useMemo(() => {
-    return findMergeByCleanTitle(item.movie.cleanTitle)
-  }, [item, findMergeByCleanTitle])
+    return findMergeByPath(item.mergerrOutputFile.path)
+  }, [item, findMergeByPath])
 
   const importDisabled = useMemo(() => {
     return existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
@@ -117,6 +112,25 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
           </Typography>
         } />
       </ListItemButton>
+      <ListItem>
+        <Divider />
+        <Typography variant="caption" color="text.secondary">
+          {item.mergerrOutputFile.path ? item.mergerrOutputFile.path : 'Movie not found'}
+        </Typography>
+        &nbsp;
+        {!item.mergerrOutputFile.exists ?
+          <Chip label="File Missing" color="error" variant="outlined" />
+          : (
+            <>
+              <Chip label="File Exists" color="success" variant="outlined" />
+              &nbsp;
+              {item.mergerrOutputFile.imported ?
+                <Chip label="Imported" color="success" variant="outlined" />
+                : <Chip label="Not Imported" color="warning" variant="outlined" />
+              }
+            </>
+          ) }
+      </ListItem>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
           <Divider />
@@ -158,10 +172,9 @@ export default function Queue({ app }: { app: App }) {
   useEffect(() => {
     fetch(`/api/app/${app.id}/queue`).then(res => res.json())
       .then(data => {
-        const records = data.records.filter(filterRecord)
-        setRecords(records)
+        setRecords(data.records)
         setLoading(false)
-        return records
+        return data.records
       })
       .then((records) => {
         records.forEach((record: any) => {

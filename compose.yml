@@ -6,7 +6,7 @@ services:
       - 3000:3000
       - 5555:5555
     volumes:
-      - config:/app/config
+      - ./config:/app/config
       - ./src:/app/src
       - next:/app/.next
     environment:
@@ -16,4 +16,3 @@ services:
 
 volumes:
   next:
-  config:

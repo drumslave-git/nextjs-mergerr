@@ -9,7 +9,7 @@ type Context = {
   listAppMerges: () => Promise<Merge[]>,
   merges: Merge[],
   deleteMerge: (merge: Merge) => Promise<void>,
-  findMergeByCleanTitle: (title: string) => Merge|null
+  findMergeByPath: (path: string) => Merge|null
   manualImport: (file: Record<string, any>) => void
   manualImportInProgress: null | string
 }
@@ -21,7 +21,7 @@ const MergerrContext = createContext<Context>({
   listAppMerges: () => Promise.resolve([]),
   merges: [],
   deleteMerge: () => Promise.resolve(),
-  findMergeByCleanTitle: () => null,
+  findMergeByPath: () => null,
   manualImport: () => Promise.resolve(),
   manualImportInProgress: null
 })
@@ -57,8 +57,7 @@ export function MergerrProvider({children, app}: {children: ReactNode, app: App}
         })),
         output: {
           path: record.movie.path,
-          name: record.movie.cleanTitle,
-          extension: downloads[0].path.split('.').pop(),
+          name: record.movie.cleanTitle
         },
       }),
     }).then(res => res.json())
@@ -76,8 +75,9 @@ export function MergerrProvider({children, app}: {children: ReactNode, app: App}
     return fetch(`/api/app/${app.id}/merge/${merge.id}`, {method: 'DELETE'}).then(res => res.json())
   }, [app])
 
-  const findMergeByCleanTitle = useCallback((title: string) => {
-    return merges.find(merge => merge.output.search(title) !== -1) || null
+  const findMergeByPath = useCallback((path: string) => {
+    console.log(merges, path)
+    return merges.find(merge => merge.output === path) || null
   }, [merges])
 
   const manualImport = useCallback((file: Record<string, any>) => {
@@ -105,7 +105,7 @@ export function MergerrProvider({children, app}: {children: ReactNode, app: App}
     listAppMerges()
   }, [listAppMerges])
 
-  return <MergerrContext.Provider value={{merge, listAppMerges, merges, deleteMerge, findMergeByCleanTitle, manualImport, manualImportInProgress}}>
+  return <MergerrContext.Provider value={{merge, listAppMerges, merges, deleteMerge, findMergeByPath, manualImport, manualImportInProgress}}>
     {children}
   </MergerrContext.Provider>
 }

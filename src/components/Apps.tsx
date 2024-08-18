@@ -8,9 +8,10 @@ import ListItemIcon from "@mui/material/ListItemIcon"
 import ListItemText from "@mui/material/ListItemText"
 import Link from "next/link"
 import {useEffect, useState} from "react"
+import {App} from "@prisma/client"
 
 const Apps = () => {
-  const [apps, setApps] = useState<any[]>([])
+  const [apps, setApps] = useState<App[]>([])
 
   useEffect(() => {
     fetch('/api/app').then(res => res.json()).then(data => {

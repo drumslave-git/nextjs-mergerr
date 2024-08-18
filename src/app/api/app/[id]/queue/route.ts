@@ -1,4 +1,5 @@
 import {ApiEndpoints} from "@/consts"
+import formatOutputFilePath from "@/lib/formatOutputFilePath"
 import {prisma} from "@/lib/prisma"
 import qs from "qs"
 import {AppType} from "@/consts"
@@ -21,6 +22,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   })
 
   const queueReq = await fetch(`${app.url}${apiEndPoint.uri}?${apiEndPointParams}`, { cache: "no-cache" } )
+  const resp = await queueReq.json()
+  resp.records = resp.records.filter(apiEndPoint.filterMergable || (() => true))
+  resp.records = resp.records.map((record: any) => {
+    return {
+      ...record,
+      mergerrOutputFile: formatOutputFilePath(record)
+    }
+  })
 
-  return Response.json(await queueReq.json(), {status: queueReq.status})
+  return Response.json(resp, {status: queueReq.status})
 }

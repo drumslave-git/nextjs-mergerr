@@ -34,8 +34,9 @@ ENV PUID=1001
 ENV PGID=1001
 
 # Don't run production as root
-RUN addgroup --system --gid $PGID nodejs
-RUN adduser --system --uid $PUID nextjs
+RUN addgroup --system --gid $PGID nodejs \
+    && adduser --system --uid $PUID nextjs \
+    && usermod -u $PUID -g $PGID nextjs
 
 COPY --from=builder /app/public ./public
 

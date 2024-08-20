@@ -8,7 +8,7 @@ groupmod -o -g "$PGID" nodejs
 
 echo "
 User UID:    $(id -u nextjs)
-User GID:    $(id -g nodejs)
+User GID:    $(id -g nextjs)
 ───────────────────────────────────────"
 
 if [ ! -f /app/config/data.db ]; then

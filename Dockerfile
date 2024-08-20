@@ -33,7 +33,6 @@ RUN chmod +x ./start.sh
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-USER nextjs
 
 COPY --from=builder /app/public ./public
 
@@ -43,6 +42,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Change ownership of /app/config to the nextjs user
+RUN chown -R nextjs:nodejs /app/config
+
+USER nextjs
 
 EXPOSE 3000
 

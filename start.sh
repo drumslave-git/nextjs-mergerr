@@ -11,6 +11,8 @@ User UID:    $(id -u nextjs)
 User GID:    $(id -g nextjs)
 ───────────────────────────────────────"
 
+chown -R $PUID:$PGID /app
+
 if [ ! -f /app/config/data.db ]; then
   echo "Database not found, creating..."
   exec su-exec nextjs touch /app/config/data.db

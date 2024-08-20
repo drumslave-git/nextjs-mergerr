@@ -30,9 +30,12 @@ WORKDIR /app
 COPY start.sh .
 RUN chmod +x ./start.sh
 
+ENV PUID=1001
+ENV PGID=1001
+
 # Don't run production as root
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid $PGID nodejs
+RUN adduser --system --uid $PUID nextjs
 
 COPY --from=builder /app/public ./public
 

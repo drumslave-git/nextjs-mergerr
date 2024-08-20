@@ -23,7 +23,7 @@ RUN npm run build
 # Step 2. Production image, copy all the files and run next
 FROM base AS runner
 
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg shadow su-exec
 
 WORKDIR /app
 
@@ -46,13 +46,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Change ownership of /app/config to the nextjs user
-RUN chown -R nextjs:nodejs /app/config
-
-USER nextjs
-
 EXPOSE 3000
 
 ENV PORT=3000
 
-CMD ["./start.sh"]
+ENTRYPOINT ["./start.sh"]
+
+CMD ["node", "server.js"]

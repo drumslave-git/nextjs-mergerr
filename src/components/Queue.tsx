@@ -35,7 +35,7 @@ const Buttons = ({item, onMerge, onTargetChange, onManualImport}: {
   }, [item, findMergeByPath])
 
   const importDisabled = useMemo(() => {
-    return item.mergerrOutputFile.imported || existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
+    return item.mergerrOutputFile.imported || !item.mergerrOutputFile.exists || existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
   }, [existingMerge, item, manualImportInProgress])
 
   const onManualImportClick = useCallback((e: any) => {
@@ -264,21 +264,23 @@ export default function Queue({app}: { app: App }) {
       })
   }, [app])
 
-  const deleteFile = useCallback(async (fileId: string, force: boolean = false) => {
+  const deleteFile = useCallback(async (itemId: string, force: boolean = false) => {
+    const fileId = records.find(item => item.id.toString() === itemId)?.movie?.movieFile?.id
     let uri = `/api/app/${app.id}/file/${fileId}`
     if (force) {
       uri = `/api/app/${app.id}/file/${fileId}?force=true`
     }
-    return await fetch(uri, {method: 'DELETE'})
-
-  }, [app])
+    const resp = await fetch(uri, {method: 'DELETE'})
+    const updatedItem = await fetch(`/api/app/${app.id}/queue/${itemId}`).then(res => res.json())
+    setRecords(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item))
+    return resp
+  }, [app, records])
 
   const onDeleteFile = useCallback(async (e: any) => {
     e.preventDefault()
     e.stopPropagation()
     const itemId = e.target.dataset.itemid
-    const fileId = records.find(item => item.id.toString() === itemId)?.movie?.movieFile?.id
-    const resp = await deleteFile(fileId)
+    const resp = await deleteFile(itemId)
     const data = await resp.json()
     if (resp.status === 200) {
       addNotification({
@@ -294,7 +296,7 @@ export default function Queue({app}: { app: App }) {
         action:
           <Button color="inherit" size="small"
                   onClick={async () => {
-                    const resp = await deleteFile(fileId, true)
+                    const resp = await deleteFile(itemId, true)
                     const data = await resp.json()
                     if (resp.status === 200) {
                       addNotification({

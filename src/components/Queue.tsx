@@ -18,10 +18,16 @@ import ListItemText from "@mui/material/ListItemText"
 import ListItemIcon from "@mui/material/ListItemIcon"
 import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
-import { useMergerr } from "@/components/MergerrProvider"
+import {useMergerr} from "@/components/MergerrProvider"
 import {ApiEndpoints, AppType, MergeStatus} from "@/consts"
+import {useNotifications} from "./NotificationsProvider"
 
-const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Record<string, any>, onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void }) => {
+const Buttons = ({item, onMerge, onTargetChange, onManualImport}: {
+  item: Record<string, any>,
+  onMerge: (e: any) => void,
+  onTargetChange: (e: any) => void,
+  onManualImport: (item: Record<string, any>, merge: any) => void
+}) => {
   const {findMergeByPath, manualImportInProgress} = useMergerr()
 
   const existingMerge = useMemo(() => {
@@ -29,7 +35,7 @@ const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Reco
   }, [item, findMergeByPath])
 
   const importDisabled = useMemo(() => {
-    return existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
+    return item.mergerrOutputFile.imported || existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
   }, [existingMerge, item, manualImportInProgress])
 
   const onManualImportClick = useCallback((e: any) => {
@@ -47,7 +53,8 @@ const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Reco
 
   return (
     <>
-      <Button variant="contained" color={item.movie ? 'secondary' : 'primary'} onClick={onTargetChange} data-itemid={item.id}>
+      <Button variant="contained" color={item.movie ? 'secondary' : 'primary'} onClick={onTargetChange}
+              data-itemid={item.id}>
         {item.movie ? 'Change Target' : 'Set Target'}
       </Button>
       {item.movie && (
@@ -63,7 +70,16 @@ const Buttons = ({ item, onMerge, onTargetChange, onManualImport }: { item: Reco
   )
 }
 
-const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualImport, onDelete }: { item: Record<string, any>, openTarget: (id: string) => void, downloads: Record<string, any>[], onMerge: (e: any) => void, onTargetChange: (e: any) => void, onManualImport: (item: Record<string, any>, merge: any) => void, onDelete: (e: any) => void }) => {
+const Item = ({item, openTarget, downloads, onMerge, onTargetChange, onManualImport, onDelete, onDeleteFile}: {
+  item: Record<string, any>,
+  openTarget: (id: string) => void,
+  downloads: Record<string, any>[],
+  onMerge: (e: any) => void,
+  onTargetChange: (e: any) => void,
+  onManualImport: (item: Record<string, any>, merge: any) => void,
+  onDelete: (e: any) => void,
+  onDeleteFile: (e: any) => void
+}) => {
   const [open, setOpen] = useState(false)
 
   const handleClick = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
@@ -81,9 +97,15 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
   }, [])
 
   const poster = useMemo(() => {
-    let poster = item.movie?.images.find((img: {coverType: string, remoteUrl: string}) => img.coverType === 'poster')?.remoteUrl
+    let poster = item.movie?.images.find((img: {
+      coverType: string,
+      remoteUrl: string
+    }) => img.coverType === 'poster')?.remoteUrl
     if (!poster) {
-      poster = item.movie?.images.find((img: {coverType: string, remoteUrl: string}) => img.coverType === 'screenshot')?.remoteUrl
+      poster = item.movie?.images.find((img: {
+        coverType: string,
+        remoteUrl: string
+      }) => img.coverType === 'screenshot')?.remoteUrl
     }
     return poster
   }, [item])
@@ -92,12 +114,12 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
     <>
       <ListItemButton onClick={handleClick} href="" data-itemid={item.id}
                       sx={{
-        gap: 1,
-      }}
+                        gap: 1,
+                      }}
       >
         {poster && (
           <ListItemIcon>
-            <Image src={poster} alt={item.movie.title} width={100} height={150} style={{objectFit: 'contain'}} />
+            <Image src={poster} alt={item.movie.title} width={100} height={150} style={{objectFit: 'contain'}}/>
           </ListItemIcon>
         )}
         <ListItemText inset={!!poster} primary={
@@ -110,36 +132,42 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
           <Typography variant="caption" color="text.secondary">
             {`${item.trackedDownloadState} • ${item.title}`}
           </Typography>
-        } />
+        }/>
       </ListItemButton>
       <ListItem>
-        <Divider />
+        <Divider/>
         <Typography variant="caption" color="text.secondary">
           {item.mergerrOutputFile.path ? item.mergerrOutputFile.path : 'Movie not found'}
         </Typography>
         &nbsp;
         {!item.mergerrOutputFile.exists ?
-          <Chip label="File Missing" color="error" variant="outlined" />
+          <Chip label="File Missing" color="error" variant="outlined"/>
           : (
             <>
-              <Chip label="File Exists" color="success" variant="outlined" />
+              <Chip label="File Exists" color="success" variant="outlined"/>
               &nbsp;
               {item.mergerrOutputFile.imported ?
-                <Chip label="Imported" color="success" variant="outlined" />
-                : <Chip label="Not Imported" color="warning" variant="outlined" />
+                <>
+                  <Chip label="Imported" color="success" variant="outlined"/>
+                  &nbsp;
+                  <Button variant="contained" color="error" onClick={onDeleteFile} data-itemid={item.id}>
+                    Delete
+                  </Button>
+                </>
+                : <Chip label="Not Imported" color="warning" variant="outlined"/>
               }
             </>
-          ) }
+          )}
       </ListItem>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <List component="div" disablePadding>
-          <Divider />
-            {downloads.map((download: any) => (
-              <ListItem key={download.id} sx={{ pl: 4 }}>
-                <ListItemText primary={download.name} secondary={download.path} />
-              </ListItem>
-            ))}
-          <Divider />
+          <Divider/>
+          {downloads.map((download: any) => (
+            <ListItem key={download.id} sx={{pl: 4}}>
+              <ListItemText primary={download.name} secondary={download.path}/>
+            </ListItem>
+          ))}
+          <Divider/>
         </List>
       </Collapse>
       <ListItem>
@@ -149,9 +177,9 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
           </Button>
           {downloads.length > 0 && (
             <>
-              <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport} />
+              <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport}/>
               <Button variant="contained" color="info" onClick={handleToggleDownloads}>
-                {downloads.length} files {open ? <ExpandLess /> : <ExpandMore />}
+                {downloads.length} files {open ? <ExpandLess/> : <ExpandMore/>}
               </Button>
             </>
           )}
@@ -161,13 +189,14 @@ const Item = ({ item, openTarget, downloads, onMerge, onTargetChange, onManualIm
   )
 }
 
-export default function Queue({ app }: { app: App }) {
+export default function Queue({app}: { app: App }) {
   const [records, setRecords] = useState<Record<string, any>[]>([])
   const [downloads, setDownloads] = useState<Record<string, Record<string, any>[]>>({})
   const [loading, setLoading] = useState<boolean>(true)
-  const [targetsOpen, setTargetsOpen] = useState<null|number>(null)
+  const [targetsOpen, setTargetsOpen] = useState<null | number>(null)
   const [manualImportOpen, setManualImportOpen] = useState<Record<string, any> | null>(null)
   const {merge, listAppMerges, manualImport} = useMergerr()
+  const {addNotification} = useNotifications()
 
   useEffect(() => {
     fetch(`/api/app/${app.id}/queue`).then(res => res.json())
@@ -192,7 +221,7 @@ export default function Queue({ app }: { app: App }) {
     const downloadId = e.target.dataset.downloadid
     const itemDownloads = downloads[downloadId]
     const itemId = e.target.dataset.itemid
-    const record = records.find((item: any) => item.id == itemId) as any
+    const record = records.find((item: any) => item.id.toString() === itemId) as any
     merge(record, itemDownloads).then(merge => {
       listAppMerges()
     })
@@ -203,7 +232,7 @@ export default function Queue({ app }: { app: App }) {
     e.preventDefault()
     e.stopPropagation()
     const itemId = e.target.dataset.itemid
-    const record = records.find((item: any) => item.id == itemId) as any
+    const record = records.find((item: any) => item.id.toString() === itemId) as any
     setTargetsOpen(record.id)
   }, [records])
 
@@ -235,6 +264,59 @@ export default function Queue({ app }: { app: App }) {
       })
   }, [app])
 
+  const deleteFile = useCallback(async (fileId: string, force: boolean = false) => {
+    let uri = `/api/app/${app.id}/file/${fileId}`
+    if (force) {
+      uri = `/api/app/${app.id}/file/${fileId}?force=true`
+    }
+    return await fetch(uri, {method: 'DELETE'})
+
+  }, [app])
+
+  const onDeleteFile = useCallback(async (e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const itemId = e.target.dataset.itemid
+    const fileId = records.find(item => item.id.toString() === itemId)?.movie?.movieFile?.id
+    const resp = await deleteFile(fileId)
+    const data = await resp.json()
+    if (resp.status === 200) {
+      addNotification({
+        title: 'File Deleted',
+        message: 'File deleted successfully',
+        type: 'success'
+      })
+    } else {
+      addNotification({
+        title: 'File Delete Failed',
+        message: data.message,
+        type: 'error',
+        action:
+          <Button color="inherit" size="small"
+                  onClick={async () => {
+                    const resp = await deleteFile(fileId, true)
+                    const data = await resp.json()
+                    if (resp.status === 200) {
+                      addNotification({
+                        title: 'File Deleted',
+                        message: 'File deleted successfully',
+                        type: 'success'
+                      })
+                    } else {
+                      addNotification({
+                        title: 'File Delete Failed',
+                        message: data.message,
+                        type: 'error',
+                      })
+                    }
+                  }}
+          >
+            Force Delete
+          </Button>
+      })
+    }
+  }, [deleteFile, records, addNotification])
+
   if (loading) {
     return <div>Loading...</div>
   }
@@ -255,11 +337,13 @@ export default function Queue({ app }: { app: App }) {
                 openTarget={openTarget}
                 onManualImport={onManualImport}
                 onDelete={onDelete}
+                onDeleteFile={onDeleteFile}
           />
         )}
       </List>
-      {targetsOpen && <Targets app={app} onClose={() => setTargetsOpen(null)} onSelect={onTargetSelect} />}
-      {manualImportOpen && <ManualImport app={app} onClose={() => setManualImportOpen(null)} item={manualImportOpen} onClickImport={onManualImportClick} />}
+      {targetsOpen && <Targets app={app} onClose={() => setTargetsOpen(null)} onSelect={onTargetSelect}/>}
+      {manualImportOpen && <ManualImport app={app} onClose={() => setManualImportOpen(null)} item={manualImportOpen}
+                                         onClickImport={onManualImportClick}/>}
     </>
   )
 }

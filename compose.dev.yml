@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
     container_name: mergerr
     ports:
       - 3000:3000
@@ -8,11 +10,7 @@ services:
     volumes:
       - ./config:/app/config
       - ./src:/app/src
-      - next:/app/.next
+      - ./public:/app/public
     environment:
       NEXT_WEBPACK_USEPOLLING: 1
-    command: npm run dev:all
     restart: always
-
-volumes:
-  next:

@@ -3,6 +3,7 @@ import formatOutputFilePath from "@/lib/formatOutputFilePath"
 import {prisma} from "@/lib/prisma"
 import qs from "qs"
 import {AppType} from "@/consts"
+import getTarget from "@/common/api/getTarget"
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const app = await prisma.app.findUnique({
@@ -24,12 +25,16 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   const queueReq = await fetch(`${app.url}${apiEndPoint.uri}?${apiEndPointParams}`, { cache: "no-cache" } )
   const resp = await queueReq.json()
   resp.records = resp.records.filter(apiEndPoint.filterMergable || (() => true))
-  resp.records = resp.records.map((record: any) => {
+  resp.records = await Promise.all(resp.records.map(async (record: any) => {
+    if (record.movieId) {
+      const targetReq = await getTarget(app, record.movieId)
+      record.movie = await targetReq.json()
+    }
     return {
       ...record,
       mergerrOutputFile: formatOutputFilePath(record)
     }
-  })
+  }))
 
   return Response.json(resp, {status: queueReq.status})
 }

@@ -27,6 +27,9 @@ RUN apk add --no-cache ffmpeg
 
 WORKDIR /app
 
+COPY start.sh .
+RUN chmod +x ./start.sh
+
 # Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -45,4 +48,4 @@ EXPOSE 3000
 
 ENV PORT=3000
 
-CMD ["node", "server.js"]
+CMD ["./start.sh"]

@@ -1,6 +1,5 @@
-import {ApiEndpoints, AppType} from "@/consts"
+import getTarget from "@/common/api/getTarget"
 import {prisma} from "@/lib/prisma"
-import qs from "qs"
 
 export async function GET(req: Request, { params }: { params: { id: string, targetId: string } }) {
   const app = await prisma.app.findUnique({
@@ -12,13 +11,7 @@ export async function GET(req: Request, { params }: { params: { id: string, targ
     return Response.json({message: 'App not found'}, {status: 404})
   }
 
-  const apiEndPoint = ApiEndpoints[app.type as AppType].target
-  const apiEndPointParams = qs.stringify({
-    ...apiEndPoint.params,
-    apiKey: app.api_key,
-  })
-
-  const targetReq = await fetch(`${app.url}${apiEndPoint.uri}/${params.targetId}?${apiEndPointParams}`, { cache: "no-cache" })
+  const targetReq = await getTarget(app, params.targetId)
 
   return Response.json(await targetReq.json(), {status: targetReq.status})
 }

@@ -9,6 +9,7 @@ import Paper from "@mui/material/Paper"
 import Typography from "@mui/material/Typography"
 
 import ClientTheme from "@/components/ClientTheme"
+import { NotificationsProvider } from "@/components/NotificationsProvider"
 
 export const metadata: Metadata = {
   title: "Mergerr",
@@ -26,26 +27,28 @@ export default function RootLayout({
     <body>
     <AppRouterCacheProvider>
       <ClientTheme>
-        <Box sx={{maxWidth: 800, margin: "10px auto"}}>
-          <Paper elevation={2} component="header" sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            p: 1,
-            mb: 2,
-          }}>
-            <Link href="/" style={{textDecoration: 'none'}}>
-              <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
-                Mergerr
-                <Version />
-              </Typography>
-            </Link>
-            <Link href="/" passHref>
-              <Button>Home</Button>
-            </Link>
-          </Paper>
-          {children}
-        </Box>
+        <NotificationsProvider>
+          <Box sx={{maxWidth: 800, margin: "10px auto"}}>
+            <Paper elevation={2} component="header" sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              p: 1,
+              mb: 2,
+            }}>
+              <Link href="/" style={{textDecoration: 'none'}}>
+                <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
+                  Mergerr
+                  <Version/>
+                </Typography>
+              </Link>
+              <Link href="/" passHref>
+                <Button>Home</Button>
+              </Link>
+            </Paper>
+            {children}
+          </Box>
+        </NotificationsProvider>
       </ClientTheme>
     </AppRouterCacheProvider>
     </body>

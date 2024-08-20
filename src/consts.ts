@@ -58,6 +58,9 @@ const RadarrApiEndpoints: Record<string, ApiEndpoint> = {
   },
   targetPublicUri: {
     uri: '/movie',
+  },
+  mediaFile: {
+    uri: '/api/v3/movieFile',
   }
 }
 

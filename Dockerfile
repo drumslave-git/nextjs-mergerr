@@ -1,6 +1,9 @@
-FROM node:20-alpine
+FROM node:20-alpine AS base
 
-RUN apk update && apk add --no-cache ffmpeg
+# Step 1. Rebuild the source code only when needed
+FROM base AS builder
+
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
@@ -15,7 +18,31 @@ RUN npm run db:push
 RUN npm run db:generate
 RUN npm run build
 
-EXPOSE 3000
-EXPOSE 5555
+# Note: It is not necessary to add an intermediate step that does a full copy of `node_modules` here
 
-CMD ["npm", "run", "start:all"]
+# Step 2. Production image, copy all the files and run next
+FROM base AS runner
+
+RUN apk add --no-cache ffmpeg
+
+WORKDIR /app
+
+# Don't run production as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+
+COPY --from=builder /app/public ./public
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/config ./config
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+EXPOSE 3000
+
+ENV PORT=3000
+
+CMD ["node", "server.js"]

@@ -3,6 +3,7 @@ import {App} from "@prisma/client"
 
 export async function GET(req: Request) {
   const apps = await prisma.app.findMany()
+  console.log('Found apps', apps.length)
   const noKeyApps = apps.map((app: App) => {
     console.log(app.name)
     const {api_key, ...rest} = app

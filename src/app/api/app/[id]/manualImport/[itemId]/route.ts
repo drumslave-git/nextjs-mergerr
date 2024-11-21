@@ -1,43 +1,26 @@
+import {ManualImportOptions} from "@/common/api/entities/ManualImportAPI"
 import {ApiEndpoints, AppType} from "@/consts"
-import {NextRequest} from "next/server"
+import withApi, {NextApiRequestWithApi} from "@/lib/withApi"
 import qs from "qs"
 import {prisma} from "@/lib/prisma"
 import path from "path"
 
-export async function GET(req: NextRequest, {params}: { params: { id: string, itemId: string } }) {
-  const app = await prisma.app.findUnique({
-    where: {
-      id: params.id,
-    },
-  })
-
-  if (!app) {
-    return Response.json({message: 'App not found'}, {status: 404})
-  }
-
+async function getHandler(req: NextApiRequestWithApi, {params}: { params: { id: string, itemId: string } }) {
   let output = req.nextUrl.searchParams.get('output')
   if (output) {
     output = output.split(path.sep).slice(0, -1).join(path.sep)
   }
 
-  const apiEndpoint = ApiEndpoints[app.type as AppType].manualImport
-
-  const reqParams = {
-    ...apiEndpoint.params,
-    apiKey: app.api_key,
+  const reqParams: ManualImportOptions = {
     [output ? 'movieId' : 'downloadId']: params.itemId,
   }
   if (output) {
     reqParams.folder = output
   }
 
-  const resp = await fetch(`${app.url}${apiEndpoint.uri}?${qs.stringify(reqParams)}`, {
-    cache: "no-cache"
-  })
-
-  const data = await resp.json() || []
+  const data = await req.api.manualImport.fetchManualImportItems(reqParams)
   data.sort((a: any, b: any) => a.path.localeCompare(b.path))
-  return Response.json(data, {status: resp.status})
+  return Response.json(data)
 }
 
 export async function POST(req: Request, {params}: { params: { id: string, itemId: string } }) {
@@ -72,3 +55,5 @@ export async function POST(req: Request, {params}: { params: { id: string, itemI
 
   return Response.json({...respData, requestedData: rest}, {status: resp.status})
 }
+
+export const GET = withApi(getHandler)

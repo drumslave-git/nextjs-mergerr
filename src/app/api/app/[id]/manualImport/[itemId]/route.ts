@@ -18,9 +18,9 @@ async function getHandler(req: NextApiRequestWithApi, {params}: { params: { id: 
     reqParams.folder = output
   }
 
-  const data = await req.api.manualImport.fetchManualImportItems(reqParams)
-  data.sort((a: any, b: any) => a.path.localeCompare(b.path))
-  return Response.json(data)
+  const resp = await req.api.manualImport.fetchManualImportItems(reqParams)
+  resp.data.sort((a: any, b: any) => a.path.localeCompare(b.path))
+  return Response.json(resp.data)
 }
 
 export async function POST(req: Request, {params}: { params: { id: string, itemId: string } }) {

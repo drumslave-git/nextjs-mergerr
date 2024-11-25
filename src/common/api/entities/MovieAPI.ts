@@ -1,4 +1,4 @@
-import { AxiosInstance } from "axios"
+import {BaseEntityAPI} from "@/common/api/entities/BaseEntityAPI"
 
 // Define types for movie-related data
 export interface Movie {
@@ -27,60 +27,25 @@ export interface MoviePagingResponse {
   movies: MovieResponse[];
 }
 
-export class MovieAPI {
-  private axiosInstance: AxiosInstance
-
-  constructor(private sharedAxiosInstance: AxiosInstance) {
-    this.axiosInstance = sharedAxiosInstance
-  }
+export class MovieAPI extends BaseEntityAPI {
 
   // Method to get all movies
-  public async get(): Promise<MovieResponse[]> {
-    try {
-      const response = await this.axiosInstance.get<MovieResponse[]>("/movie")
-      return response.data
-    } catch (error) {
-      throw new Error(`Failed to fetch movies: ${error}`)
-    }
+  async get(id?: number | string) {
+    return await this._get<MovieResponse[] | Movie>("movie" + (id ? `/${id}` : ''))
   }
 
   // Method to add a new movie
-  public async add(movie: Movie): Promise<MovieResponse> {
-    try {
-      const response = await this.axiosInstance.post<MovieResponse>("/movie", movie)
-      return response.data
-    } catch (error) {
-      throw new Error(`Failed to add movie: ${error}`)
-    }
+  async add(movie: Movie) {
+    return await this._post<MovieResponse>("movie", movie)
   }
 
   // Method to delete a movie by ID
-  public async delete(movieId: number, deleteFiles: boolean = false): Promise<void> {
-    try {
-      const params = { deleteFiles }
-      await this.axiosInstance.delete(`/movie/${movieId}`, { params })
-    } catch (error) {
-      throw new Error(`Failed to delete movie: ${error}`)
-    }
-  }
-
-  // Method to get movie details by ID
-  public async getById(movieId: number): Promise<MovieResponse> {
-    try {
-      const response = await this.axiosInstance.get<MovieResponse>(`/movie/${movieId}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Failed to fetch movie by ID: ${error}`)
-    }
+  async delete(movieId: number, deleteFiles: boolean = false) {
+    await this._delete(`movie/${movieId}`, { deleteFiles })
   }
 
   // Method to update an existing movie
-  public async update(movie: Movie): Promise<MovieResponse> {
-    try {
-      const response = await this.axiosInstance.put<MovieResponse>(`/movie/${movie.id}`, movie)
-      return response.data
-    } catch (error) {
-      throw new Error(`Failed to update movie: ${error}`)
-    }
+  async update(movie: Movie) {
+    return await this._put<MovieResponse>(`movie/${movie.id}`, movie)
   }
 }

@@ -1,5 +1,4 @@
-import { AxiosInstance } from "axios"
-import qs from "qs"
+import {BaseEntityAPI} from "@/common/api/entities/BaseEntityAPI"
 
 // Define types for manual import
 export interface ManualImportOptions {
@@ -48,29 +47,14 @@ export interface ImportDecision {
   };
 }
 
-export class ManualImportAPI {
-  private axiosInstance: AxiosInstance
-
-  constructor(private sharedAxiosInstance: AxiosInstance) {
-    this.axiosInstance = sharedAxiosInstance
-  }
-
+export class ManualImportAPI extends BaseEntityAPI {
   // Method to fetch manual import items
-  public async fetchManualImportItems(options: ManualImportOptions): Promise<ManualImportItem[]> {
-    try {
-      const response = await this.axiosInstance.get<ManualImportItem[]>(`/manualimport?${qs.stringify(options)}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Failed to fetch manual import items: ${error}`)
-    }
+  async fetchManualImportItems(options: ManualImportOptions) {
+    return await this._get<ManualImportItem[]>('manualimport', options)
   }
 
   // Method to import manual decisions
-  public async importManualDecisions(decisions: ImportDecision[]): Promise<void> {
-    try {
-      await this.axiosInstance.post("/manualimport/import", decisions)
-    } catch (error) {
-      throw new Error(`Failed to import manual decisions: ${error}`)
-    }
+  async importManualDecisions(decisions: ImportDecision[]) {
+    await this._post<void>("manualimport/import", decisions)
   }
 }

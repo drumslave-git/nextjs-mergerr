@@ -6,28 +6,21 @@ import qs from "qs"
 import {AppType} from "@/consts"
 import getTarget from "@/common/api/getTarget"
 
-async function getHandler(req: NextApiRequestWithApi, { params }: { params: { id: string } }) {
-  let resp
-  try {
-    resp = await req.api.queue.getAll()
-    resp.records = await Promise.all(req.api.queue.filterMergable(resp.records).map(async record => {
-      if (record.movieId) {
-        record.movie = await req.api.movie.getById(record.movieId)
-      }
-      return {
-        ...record,
-        mergerrOutputFile: formatOutputFilePath(record)
-      }
-
-    }))
-  } catch (e) {
-    resp = {
-      records: [],
-      message: e.message,
+async function getHandler(req: NextApiRequestWithApi) {
+  const resp = await req.api.queue.getAll()
+  resp.data.records = await Promise.all(req.api.queue.filterMergable(resp.data.records).map(async record => {
+    if (record.movieId) {
+      const movieReq = await req.api.movie.get(record.movieId)
+      record.movie = movieReq.data
     }
-  }
+    return {
+      ...record,
+      mergerrOutputFile: formatOutputFilePath(record)
+    }
 
-  return Response.json(resp)
+  }))
+
+  return Response.json(resp.data, {status: resp.status})
 }
 
 export const GET = withApi(getHandler)

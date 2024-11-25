@@ -1,6 +1,7 @@
 // Import all entity APIs (e.g., MovieAPI, SystemAPI, etc.)
 import {ManualImportAPI} from "@/common/api/entities/ManualImportAPI"
 import {QueueAPI} from "@/common/api/entities/QueueAPI"
+import {SystemAPI} from "@/common/api/entities/SystemAPI"
 import axios, { AxiosInstance } from "axios"
 import { MovieAPI } from "@/common/api/entities/MovieAPI"
 
@@ -16,6 +17,7 @@ export class RadarrAPI {
   private axiosInstance: AxiosInstance
 
   // Entity APIs
+  public system: SystemAPI
   public movie: MovieAPI
   public queue: QueueAPI
   public manualImport: ManualImportAPI
@@ -37,6 +39,7 @@ export class RadarrAPI {
     })
 
     // Initialize each entity with the shared config
+    this.system = new SystemAPI(this.axiosInstance)
     this.movie = new MovieAPI(this.axiosInstance)
     this.queue = new QueueAPI(this.axiosInstance)
     this.manualImport = new ManualImportAPI(this.axiosInstance)

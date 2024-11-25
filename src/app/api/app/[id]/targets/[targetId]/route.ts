@@ -1,17 +1,9 @@
-import getTarget from "@/common/api/getTarget"
-import {prisma} from "@/lib/prisma"
+import withApi, {NextApiRequestWithApi} from "@/lib/withApi"
 
-export async function GET(req: Request, { params }: { params: { id: string, targetId: string } }) {
-  const app = await prisma.app.findUnique({
-    where: {
-      id: params.id,
-    },
-  })
-  if (!app) {
-    return Response.json({message: 'App not found'}, {status: 404})
-  }
+async function getHandler(req: NextApiRequestWithApi, { params }: { params: { id: string, targetId: string } }) {
+  const targetReq = await req.api.movie.get(params.targetId)
 
-  const targetReq = await getTarget(app, params.targetId)
-
-  return Response.json(await targetReq.json(), {status: targetReq.status})
+  return Response.json(targetReq.data, {status: targetReq.status})
 }
+
+export const GET = withApi(getHandler)

@@ -1,13 +1,14 @@
-import { NextApiRequest, NextApiResponse } from 'next'
+import {WhisparrAPI} from "@/common/api/Whisparr/api"
 import appIdMiddleware from '@/middleware/appIdMiddleware'
-import {RadarrAPI} from "@/common/api/RadarrApi"
+import {RadarrAPI} from "@/common/api/Radarr/api"
+import {NextRequest} from "next/server"
 
-export type NextApiRequestWithApi = NextApiRequest & {api: RadarrAPI}
+export type NextRequestWithApi = NextRequest & {api: RadarrAPI | WhisparrAPI}
 
 export default function withApi(
-  handler: (req: NextApiRequestWithApi, { params }: { params: { id: string } }) => any | Promise<any>
+  handler: (req: NextRequestWithApi, { params }: { params: { id: string } & Record<string, any> }) => any | Promise<any>
 ) {
-  return async (req: NextApiRequestWithApi, { params }: { params: { id: string } }) => {
+  return async (req: NextRequestWithApi, { params }: { params: { id: string } & Record<string, any> }) => {
     await appIdMiddleware(req, {params})
     return handler(req, {params})
   }

@@ -1,4 +1,4 @@
-import {RadarrAPI} from "@/common/api/RadarrApi"
+import {RadarrAPI} from "@/common/api/Radarr/api"
 
 export async function POST(req: Request) {
   const  {url, api_key} = await req.json()
@@ -6,6 +6,7 @@ export async function POST(req: Request) {
     apiKey: api_key,
     baseUrl: url
   })
+  const resp = await api.system.getStatus()
 
-  return Response.json(await api.system.getStatus())
+  return Response.json(resp.data, {status: resp.status})
 }

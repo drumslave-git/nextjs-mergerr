@@ -1,3 +1,4 @@
+import {TMDBApiProvider} from "@/components/TMDBApiProvider"
 import Version from "@/components/Version"
 import Box from "@mui/material/Box"
 import type {Metadata} from "next"
@@ -28,26 +29,28 @@ export default function RootLayout({
     <AppRouterCacheProvider>
       <ClientTheme>
         <NotificationsProvider>
-          <Box sx={{maxWidth: 800, margin: "10px auto"}}>
-            <Paper elevation={2} component="header" sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              p: 1,
-              mb: 2,
-            }}>
-              <Link href="/" style={{textDecoration: 'none'}}>
-                <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
-                  Mergerr
-                  <Version/>
-                </Typography>
-              </Link>
-              <Link href="/" passHref>
-                <Button>Home</Button>
-              </Link>
-            </Paper>
-            {children}
-          </Box>
+          <TMDBApiProvider>
+            <Box sx={{maxWidth: 1200, margin: "10px auto"}}>
+              <Paper elevation={2} component="header" sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 1,
+                mb: 2,
+              }}>
+                <Link href="/" style={{textDecoration: 'none'}}>
+                  <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
+                    Mergerr
+                    <Version/>
+                  </Typography>
+                </Link>
+                <Link href="/" passHref>
+                  <Button>Home</Button>
+                </Link>
+              </Paper>
+              {children}
+            </Box>
+          </TMDBApiProvider>
         </NotificationsProvider>
       </ClientTheme>
     </AppRouterCacheProvider>

@@ -1,4 +1,4 @@
-import {BaseEntityAPI} from "@/common/api/entities/BaseEntityAPI"
+import {BaseEntityAPI} from "@/common/api/BaseEntityAPI"
 
 // Define types for movie-related data
 export interface Movie {
@@ -13,6 +13,10 @@ export interface Movie {
   addOptions?: {
     searchForMovie: boolean;
   };
+  images: {
+    coverType: string;
+    remoteUrl: string;
+  }[];
 }
 
 export interface MovieResponse extends Movie {
@@ -31,7 +35,7 @@ export class MovieAPI extends BaseEntityAPI {
 
   // Method to get all movies
   async get(id?: number | string) {
-    return await this._get<MovieResponse[] | Movie>("movie" + (id ? `/${id}` : ''))
+    return await this._get<MovieResponse[] | Movie, any>("movie" + (id ? `/${id}` : ''))
   }
 
   // Method to add a new movie

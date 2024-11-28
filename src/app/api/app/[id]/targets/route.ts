@@ -1,6 +1,6 @@
-import withApi, {NextApiRequestWithApi} from "@/lib/withApi"
+import withApi, {NextRequestWithApi} from "@/lib/withApi"
 
-async function getHandler(req: NextApiRequestWithApi) {
+async function getHandler(req: NextRequestWithApi) {
   const targetsReq = await req.api.movie.get()
 
   return Response.json(targetsReq.data, {status: targetsReq.status})

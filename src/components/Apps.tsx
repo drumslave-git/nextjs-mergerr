@@ -38,6 +38,11 @@ const Apps = () => {
               View Queue
             </Button>
           </Link>
+          <Link href={`/apps/${app.id}/search`} passHref>
+            <Button color="secondary">
+              Search
+            </Button>
+          </Link>
           <Link href={`/apps/${app.id}/edit`} passHref>
             <Button color="secondary">
               Edit

@@ -1,323 +1,95 @@
 'use client'
 
-import ManualImport from "@/components/ManualImport"
-import Targets from "@/components/Targets"
-import {ButtonGroup, Divider} from "@mui/material"
-import Chip from "@mui/material/Chip"
-import {MouseEvent} from "react"
-import Collapse from "@mui/material/Collapse"
-import Button from "@mui/material/Button"
-import ListItemButton from "@mui/material/ListItemButton"
-import Typography from "@mui/material/Typography"
-import {App} from "@prisma/client"
-import Image from "next/image"
-import {useCallback, useEffect, useMemo, useState} from "react"
+import {Item} from "@/components/common/ItemsLayout/Grid"
+import Card from "@mui/material/Card"
+import CardContent from "@mui/material/CardContent"
 import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
-import ListItemText from "@mui/material/ListItemText"
-import ListItemIcon from "@mui/material/ListItemIcon"
-import ExpandLess from "@mui/icons-material/ExpandLess"
-import ExpandMore from "@mui/icons-material/ExpandMore"
-import {useMergerr} from "@/components/MergerrProvider"
-import {ApiEndpoints, AppType, MergeStatus} from "@/consts"
-import {useNotifications} from "./NotificationsProvider"
+import Link from "next/link"
+import {Fragment, ReactNode, useCallback, useEffect, useMemo, useState} from "react"
+import {App} from "@prisma/client"
+import Box from "@mui/material/Box"
+import Grid from "@/components/common/ItemsLayout/Grid"
+import Typography from "@mui/material/Typography"
+import InfoIcon from "@mui/icons-material/Info"
+import CloseIcon from "@mui/icons-material/Close"
+import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"
+import CardMedia from "@mui/material/CardMedia"
 
-const Buttons = ({item, onMerge, onTargetChange, onManualImport}: {
-  item: Record<string, any>,
-  onMerge: (e: any) => void,
-  onTargetChange: (e: any) => void,
-  onManualImport: (item: Record<string, any>, merge: any) => void
-}) => {
-  const {findMergeByPath, manualImportInProgress} = useMergerr()
-
-  const existingMerge = useMemo(() => {
-    return findMergeByPath(item.mergerrOutputFile.path)
-  }, [item, findMergeByPath])
-
-  const importDisabled = useMemo(() => {
-    return item.mergerrOutputFile.imported || !item.mergerrOutputFile.exists || existingMerge?.status !== MergeStatus.done || manualImportInProgress === item.movie.id
-  }, [existingMerge, item, manualImportInProgress])
-
-  const onManualImportClick = useCallback((e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    onManualImport(item, existingMerge)
-  }, [existingMerge, item, onManualImport])
-
-  if (existingMerge) {
-    return <Button variant="contained" color="secondary" onClick={onManualImportClick} disabled={importDisabled}>
-      {manualImportInProgress === item.movie.id ? 'Importing...' : 'Import'}
-    </Button>
-  }
-
-
+const Issues = ({record}: {record: QueueEntry}) => {
   return (
-    <>
-      <Button variant="contained" color={item.movie ? 'secondary' : 'primary'} onClick={onTargetChange}
-              data-itemid={item.id}>
-        {item.movie ? 'Change Target' : 'Set Target'}
-      </Button>
-      {item.movie && (
-        <Button
-          color="primary"
-          variant="contained"
-          onClick={onMerge}
-          data-downloadid={item.downloadId}
-          data-itemid={item.id}
-        >Merge</Button>
-      )}
-    </>
+    <List>
+      {record.statusMessages.map((statusMessage, statusMessageIndex) => (
+        <Fragment key={statusMessageIndex}>
+          <ListItem>
+            {statusMessage.title}
+          </ListItem>
+          {statusMessage.messages.length > 0 && (
+            <List disablePadding>
+              {statusMessage.messages.map((message, messageIndex) => (
+                <ListItem key={messageIndex}>{message}</ListItem>
+              ))}
+            </List>
+          )}
+        </Fragment>
+      ))}
+    </List>
   )
 }
 
-const Item = ({item, openTarget, downloads, onMerge, onTargetChange, onManualImport, onDelete, onDeleteFile}: {
-  item: Record<string, any>,
-  openTarget: (id: string) => void,
-  downloads: Record<string, any>[],
-  onMerge: (e: any) => void,
-  onTargetChange: (e: any) => void,
-  onManualImport: (item: Record<string, any>, merge: any) => void,
-  onDelete: (e: any) => void,
-  onDeleteFile: (e: any) => void
-}) => {
-  const [open, setOpen] = useState(false)
+const AdditionalInfo = ({records, item}: { records: QueueEntry[], item: Item }) => {
+  const record = records.find(r => r.id === item.id) as QueueEntry
+  const [showInfo, setShowInfo] = useState<boolean>(false)
 
-  const handleClick = useCallback((e: MouseEvent<HTMLAnchorElement>) => {
-    if (item.movie) {
-      openTarget(item.movie.foreignId)
-    } else {
-      onTargetChange(e)
-    }
+  const onInfoToggle = useCallback(() => {
+    setShowInfo(v => !v)
   }, [])
 
-  const handleToggleDownloads = useCallback((e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setOpen(v => !v)
-  }, [])
-
-  const poster = useMemo(() => {
-    let poster = item.movie?.images.find((img: {
-      coverType: string,
-      remoteUrl: string
-    }) => img.coverType === 'poster')?.remoteUrl
-    if (!poster) {
-      poster = item.movie?.images.find((img: {
-        coverType: string,
-        remoteUrl: string
-      }) => img.coverType === 'screenshot')?.remoteUrl
+  return <Box sx={{position: 'absolute', inset: 0}}>
+    {!showInfo ?
+      <InfoIcon onClick={onInfoToggle} sx={{position: 'absolute', right: 0, top: 0, zIndex: 2, cursor: 'pointer'}} fontSize="large" />
+      :
+      <CloseIcon onClick={onInfoToggle} sx={{position: 'absolute', right: 0, top: 0, zIndex: 2, cursor: 'pointer'}} fontSize="large" />
     }
-    return poster
-  }, [item])
+    {showInfo && (
+      <Box sx={{position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'background.paper', textAlign: 'left', overflow: 'auto'}}>
+        <Issues record={record} />
+      </Box>
+    )}
+  </Box>
+}
 
-  return (
-    <>
-      <ListItemButton onClick={handleClick} href="" data-itemid={item.id}
-                      sx={{
-                        gap: 1,
-                      }}
-      >
-        {poster && (
-          <ListItemIcon>
-            <Image src={poster} alt={item.movie.title} width={100} height={150} style={{objectFit: 'contain'}}/>
-          </ListItemIcon>
-        )}
-        <ListItemText inset={!!poster} primary={
-          item.movie ? <>
-            <Typography variant="caption">{item.movie.title}</Typography>
-            &nbsp;
-            <Typography variant="caption" color="text.secondary">{item.movie.year}</Typography>
-          </> : 'Unknown'
-        } secondary={
-          <Typography variant="caption" color="text.secondary">
-            {`${item.trackedDownloadState} • ${item.title}`}
-          </Typography>
-        }/>
-      </ListItemButton>
-      <ListItem>
-        <Divider/>
-        <Typography variant="caption" color="text.secondary">
-          {item.mergerrOutputFile.path ? item.mergerrOutputFile.path : 'Movie not found'}
-        </Typography>
-        &nbsp;
-        {!item.mergerrOutputFile.exists ?
-          <Chip label="File Missing" color="error" variant="outlined"/>
-          : (
-            <>
-              <Chip label="File Exists" color="success" variant="outlined"/>
-              &nbsp;
-              {item.mergerrOutputFile.imported ?
-                <>
-                  <Chip label="Imported" color="success" variant="outlined"/>
-                  &nbsp;
-                  <Button variant="contained" color="error" onClick={onDeleteFile} data-itemid={item.id}>
-                    Delete
-                  </Button>
-                </>
-                : <Chip label="Not Imported" color="warning" variant="outlined"/>
-              }
-            </>
-          )}
-      </ListItem>
-      <Collapse in={open} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding>
-          <Divider/>
-          {downloads.map((download: any) => (
-            <ListItem key={download.id} sx={{pl: 4}}>
-              <ListItemText primary={download.name} secondary={download.path}/>
-            </ListItem>
-          ))}
-          <Divider/>
-        </List>
-      </Collapse>
-      <ListItem>
-        <ButtonGroup fullWidth>
-          <Button variant="contained" color="error" onClick={onDelete} data-itemid={item.id}>
-            Delete
-          </Button>
-          {downloads.length > 0 && (
-            <>
-              <Buttons item={item} onMerge={onMerge} onTargetChange={onTargetChange} onManualImport={onManualImport}/>
-              <Button variant="contained" color="info" onClick={handleToggleDownloads}>
-                {downloads.length} files {open ? <ExpandLess/> : <ExpandMore/>}
-              </Button>
-            </>
-          )}
-        </ButtonGroup>
-      </ListItem>
-    </>
-  )
+const RecordLink = ({records, item, app, children}: { records: QueueEntry[], item: Item, app: App, children: ReactNode }) => {
+  const record = records.find(r => r.id === item.id) as QueueEntry
+  return <Link href={`/apps/${app.id}/queue/${record.movieId}`} passHref style={{flexDirection: 'column', display: 'flex', height: '100%', position: 'relative', textDecoration: 'none', color: 'inherit'}}>
+    {children}
+  </Link>
 }
 
 export default function Queue({app}: { app: App }) {
-  const [records, setRecords] = useState<Record<string, any>[]>([])
-  const [downloads, setDownloads] = useState<Record<string, Record<string, any>[]>>({})
+  const [records, setRecords] = useState<QueueEntry[]>([])
+  const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  const [targetsOpen, setTargetsOpen] = useState<null | number>(null)
-  const [manualImportOpen, setManualImportOpen] = useState<Record<string, any> | null>(null)
-  const {merge, listAppMerges, manualImport} = useMergerr()
-  const {addNotification} = useNotifications()
 
   useEffect(() => {
     fetch(`/api/app/${app.id}/queue`).then(res => res.json())
       .then(data => {
         setRecords(data.records)
+        setItems(data.records.map((record: QueueEntry) => {
+          let poster = record.movie?.images.find((img) => img.coverType === 'poster')?.remoteUrl
+          if (!poster) {
+            poster = record.movie?.images.find((img) => img.coverType === 'screenshot')?.remoteUrl
+          }
+
+          return {
+            id: record.id,
+            image: poster,
+            title: record.movie?.title || record.title,
+          }
+        }))
         setLoading(false)
-        return data.records
       })
-      .then((records) => {
-        records.forEach((record: any) => {
-          fetch(`/api/app/${app.id}/manualImport/${record.downloadId}`).then(res => res.json())
-            .then(data => {
-              setDownloads(prev => ({...prev, [record.downloadId]: data}))
-            })
-        })
-      })
-  }, [app])
-
-  const onMerge = useCallback((e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const downloadId = e.target.dataset.downloadid
-    const itemDownloads = downloads[downloadId]
-    const itemId = e.target.dataset.itemid
-    const record = records.find((item: any) => item.id.toString() === itemId) as any
-    merge(record, itemDownloads).then(merge => {
-      listAppMerges()
-    })
-
-  }, [downloads, merge, listAppMerges, records])
-
-  const onTargetChange = useCallback(async (e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const itemId = e.target.dataset.itemid
-    const record = records.find((item: any) => item.id.toString() === itemId) as any
-    setTargetsOpen(record.id)
-  }, [records])
-
-  const onTargetSelect = useCallback((target: Record<string, any>) => {
-    setRecords(prev => prev.map(item => item.id == targetsOpen ? {...item, movie: target} : item))
-    setTargetsOpen(null)
-  }, [targetsOpen])
-
-  const openTarget = useCallback((foreignId: string) => {
-    window.open(`${app.public_url || app.url}${ApiEndpoints[app.type as AppType].targetPublicUri.uri}/${foreignId}`, '_blank')
-  }, [app])
-
-  const onManualImport = useCallback((item: Record<string, any>) => {
-    setManualImportOpen(item)
-  }, [])
-
-  const onManualImportClick = useCallback((file: Record<string, any>) => {
-    setManualImportOpen(null)
-    manualImport(file)
-  }, [manualImport])
-
-  const onDelete = useCallback((e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const itemId = e.target.dataset.itemid
-    fetch(`/api/app/${app.id}/queue/${itemId}`, {method: 'DELETE'}).then(res => res.json())
-      .then(data => {
-        setRecords(prev => prev.filter(item => item.id.toString() !== itemId))
-      })
-  }, [app])
-
-  const deleteFile = useCallback(async (itemId: string, force: boolean = false) => {
-    const fileId = records.find(item => item.id.toString() === itemId)?.movie?.movieFile?.id
-    let uri = `/api/app/${app.id}/file/${fileId}`
-    if (force) {
-      uri = `/api/app/${app.id}/file/${fileId}?force=true`
-    }
-    const resp = await fetch(uri, {method: 'DELETE'})
-    const updatedItem = await fetch(`/api/app/${app.id}/queue/${itemId}`).then(res => res.json())
-    setRecords(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item))
-    return resp
-  }, [app, records])
-
-  const onDeleteFile = useCallback(async (e: any) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const itemId = e.target.dataset.itemid
-    const resp = await deleteFile(itemId)
-    const data = await resp.json()
-    if (resp.status === 200) {
-      addNotification({
-        title: 'File Deleted',
-        message: 'File deleted successfully',
-        type: 'success'
-      })
-    } else {
-      addNotification({
-        title: 'File Delete Failed',
-        message: data.message,
-        type: 'error',
-        action:
-          <Button color="inherit" size="small"
-                  onClick={async () => {
-                    const resp = await deleteFile(itemId, true)
-                    const data = await resp.json()
-                    if (resp.status === 200) {
-                      addNotification({
-                        title: 'File Deleted',
-                        message: 'File deleted successfully',
-                        type: 'success'
-                      })
-                    } else {
-                      addNotification({
-                        title: 'File Delete Failed',
-                        message: data.message,
-                        type: 'error',
-                      })
-                    }
-                  }}
-          >
-            Force Delete
-          </Button>
-      })
-    }
-  }, [deleteFile, records, addNotification])
+  }, [app.id])
 
   if (loading) {
     return <div>Loading...</div>
@@ -328,24 +100,10 @@ export default function Queue({app}: { app: App }) {
   }
 
   return (
-    <>
-      <List>
-        {records.map(item =>
-          <Item key={item.id}
-                item={item}
-                downloads={downloads[item.downloadId] || []}
-                onMerge={onMerge}
-                onTargetChange={onTargetChange}
-                openTarget={openTarget}
-                onManualImport={onManualImport}
-                onDelete={onDelete}
-                onDeleteFile={onDeleteFile}
-          />
-        )}
-      </List>
-      {targetsOpen && <Targets app={app} onClose={() => setTargetsOpen(null)} onSelect={onTargetSelect}/>}
-      {manualImportOpen && <ManualImport app={app} onClose={() => setManualImportOpen(null)} item={manualImportOpen}
-                                         onClickImport={onManualImportClick}/>}
-    </>
+    <Grid
+      items={items}
+      ActionComponent={({item, children}) => <RecordLink records={records} item={item} app={app}>{children}</RecordLink>}
+      AdditionalContentComponent={({item}) => <AdditionalInfo records={records} item={item} />}
+    />
   )
 }

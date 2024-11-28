@@ -1,4 +1,4 @@
-import {BaseEntityAPI} from "@/common/api/entities/BaseEntityAPI"
+import {BaseEntityAPI} from "@/common/api/BaseEntityAPI"
 
 // Define types for manual import
 export interface ManualImportOptions {

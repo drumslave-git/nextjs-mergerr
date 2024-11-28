@@ -1,4 +1,4 @@
-import {BaseEntityAPI} from "@/common/api/entities/BaseEntityAPI"
+import {BaseEntityAPI} from "@/common/api/BaseEntityAPI"
 
 // Define types for system-related responses
 export interface SystemStatus {

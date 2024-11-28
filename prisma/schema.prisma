@@ -39,3 +39,9 @@ model Input {
   merge     Merge    @relation(fields: [merge_id], references: [id], name: "MergeInputs", onDelete: Cascade)
   merge_id  String
 }
+
+model TMDB {
+  key String @id
+  lastRequestAt DateTime?
+  requestesCount Int @default(0)
+}

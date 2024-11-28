@@ -1,11 +1,11 @@
 import {ManualImportOptions} from "@/common/api/entities/ManualImportAPI"
 import {ApiEndpoints, AppType} from "@/consts"
-import withApi, {NextApiRequestWithApi} from "@/lib/withApi"
+import withApi, {NextRequestWithApi} from "@/lib/withApi"
 import qs from "qs"
 import {prisma} from "@/lib/prisma"
 import path from "path"
 
-async function getHandler(req: NextApiRequestWithApi, {params}: { params: { id: string, itemId: string } }) {
+async function getHandler(req: NextRequestWithApi, {params}: { params: { id: string, itemId: string } }) {
   let output = req.nextUrl.searchParams.get('output')
   if (output) {
     output = output.split(path.sep).slice(0, -1).join(path.sep)

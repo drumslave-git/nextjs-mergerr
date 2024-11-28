@@ -1,13 +1,15 @@
 import Apps from "@/components/Apps"
-import {prisma} from "@/lib/prisma"
 import Box from "@mui/material/Box"
 import Link from "next/link"
 import Paper from "@mui/material/Paper"
 import Button from "@mui/material/Button"
 
-export default async function Home() {
-  const apps = await prisma.app.findMany()
+import '@fontsource/roboto/300.css'
+import '@fontsource/roboto/400.css'
+import '@fontsource/roboto/500.css'
+import '@fontsource/roboto/700.css'
 
+export default async function Home() {
   return (
     <>
       <Paper className="flex min-h-screen flex-col items-center justify-between p-24">

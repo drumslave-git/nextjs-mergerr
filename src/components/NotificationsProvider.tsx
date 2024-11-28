@@ -13,8 +13,8 @@ export type Notification = {
 
 const NotificationsContext = createContext<{
   notifications: Notification[],
-  addNotification: (notification: any) => void,
-  removeNotification: (notification: any) => void,
+  addNotification: (notification: Notification) => void,
+  removeNotification: (notification: Notification) => void,
 }>({
   notifications: [],
   addNotification: () => {},

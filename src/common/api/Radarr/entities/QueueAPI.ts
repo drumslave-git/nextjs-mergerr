@@ -1,4 +1,5 @@
-import {BaseEntityAPI} from "@/common/api/entities/BaseEntityAPI"
+import {BaseEntityAPI} from "@/common/api/BaseEntityAPI"
+import {Movie} from "@/common/api/Radarr/entities/MovieAPI"
 import {AxiosResponse} from "axios"
 
 // Define types for queue entries
@@ -30,7 +31,9 @@ export interface QueueEntry {
   };
   statusMessages: {
     messages: string[];
-  }[]
+    title: string;
+  }[],
+  movie: Movie
 }
 
 export interface Queue {
@@ -45,7 +48,7 @@ export interface Queue {
 export class QueueAPI extends BaseEntityAPI {
   // Method to fetch all queue entries
   async getAll(page = 1, records: QueueEntry[] = []): Promise<AxiosResponse<Queue, any>> {
-    const response = await this._get<Queue>('queue', {
+    const response = await this._get<Queue, any>('queue', {
       page,
       pageSize: 100,
       includeUnknownMovieItems: true,
@@ -68,8 +71,8 @@ export class QueueAPI extends BaseEntityAPI {
   }
 
   // Method to get a specific queue item by ID
-  async get(queueId: number) {
-    return await this._get<QueueEntry>(`queue/${queueId}`)
+  async details(movieId: string | number) {
+    return await this._get<QueueEntry[], any>('queue/details', {movieId})
   }
 
   // Method to delete a specific queue item by ID
@@ -77,11 +80,12 @@ export class QueueAPI extends BaseEntityAPI {
     return await this._delete(`queue/${queueId}`, { blacklist })
   }
 
-  filterMergable(records: QueueEntry[]): QueueEntry[] {
-    return records.filter(record => {
-      return record.trackedDownloadState === 'importPending' &&
-      record.trackedDownloadStatus === 'warning' &&
+  isPending(record: QueueEntry): boolean {
+    return record.trackedDownloadState === 'importPending'
+  }
+
+  isMergable(record: QueueEntry): boolean {
+    return record.trackedDownloadStatus === 'warning' &&
       record.statusMessages.filter((msg) => !!msg.messages.find((message) => message === 'Unable to parse file')).length > 1
-    })
   }
 }

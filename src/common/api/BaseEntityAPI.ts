@@ -1,4 +1,4 @@
-import {AxiosInstance, AxiosResponse} from "axios"
+import {AxiosError, AxiosInstance, AxiosResponse} from "axios"
 import qs from "qs"
 
 export class BaseEntityAPI {
@@ -8,8 +8,13 @@ export class BaseEntityAPI {
     this._axios = axios
   }
 
-  protected async _get<T>(uri: string, params: any = {}): Promise<AxiosResponse<T, any>> {
-    return await this._axios.get<T>(`/${uri}?${qs.stringify(params)}`)
+  protected async _get<T, E>(uri: string, params: any = {}): Promise<AxiosResponse<T, any> | AxiosResponse<E, any>> {
+    try {
+      return await this._axios.get<T>(`/${uri}?${qs.stringify(params)}`)
+    } catch (e) {
+      const error = e as AxiosError
+      return error.response as AxiosResponse<E, any>
+    }
   }
 
   protected async _post<T>(uri: string, data: any = {}, params: any = {}): Promise<AxiosResponse<T, any>> {

@@ -1,12 +1,9 @@
 'use client'
+import {useNotifications} from "@/components/NotificationsProvider"
 import Box from "@mui/material/Box"
 import {useRouter} from "next/navigation"
 import {useCallback, useEffect, useState} from "react"
 import Paper from '@mui/material/Paper'
-import InputLabel from '@mui/material/InputLabel'
-import MenuItem from '@mui/material/MenuItem'
-import FormControl from '@mui/material/FormControl'
-import Select from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import {App} from '@prisma/client'
@@ -40,16 +37,24 @@ export default function EditApp({app}: { app?: App }) {
   const [tested, setTested] = useState<boolean>(false)
   const [disableButtons, setDisableButtons] = useState<boolean>(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const {addNotification} = useNotifications()
 
   const router = useRouter()
 
   const onChange = useCallback((e: any) => {
+    setTested(false)
     setErrors(prev => {
       const {[e.target.name]: _, ...rest} = prev
       return rest
     })
-    setAppConfig((prev) => ({...prev, [e.target.name]: e.target.value}))
-  }, [])
+    const config = {
+      ...appConfig,
+      [e.target.name]: e.target.value
+    }
+    const errors = validate(appConfig)
+    setDisableButtons(Object.keys(errors).length > 0)
+    setAppConfig(config)
+  }, [appConfig])
 
   const onTest = useCallback(() => {
     const errors = validate(appConfig)
@@ -62,6 +67,20 @@ export default function EditApp({app}: { app?: App }) {
       method: 'POST',
       body: JSON.stringify(appConfig),
     }).then(res => res.json()).then(data => {
+      const type = data.appName.toLowerCase()
+      // @ts-ignore
+      if(!AppType[type]) {
+        addNotification({
+          title: 'Error',
+          message: 'Invalid app type',
+          type: 'error',
+        })
+        return
+      }
+      setAppConfig(cfg => ({
+        ...cfg,
+        type: data.appName
+      }))
       setTested(true)
     }).catch(err => {
       console.error(err)
@@ -70,7 +89,7 @@ export default function EditApp({app}: { app?: App }) {
       .finally(() => {
         setDisableButtons(false)
       })
-  }, [appConfig])
+  }, [addNotification, appConfig])
 
   const onSave = useCallback(() => {
     const errors = validate(appConfig)
@@ -93,35 +112,11 @@ export default function EditApp({app}: { app?: App }) {
       })
   }, [appConfig, router])
 
-  useEffect(() => {
-    setTested(false)
-    const errors = validate(appConfig)
-    setDisableButtons(Object.keys(errors).length > 0)
-  }, [appConfig])
-
   return (
     <>
       <Paper>
         <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 2}}>
           <TextField required error={!!errors.name} label="Name" name="name" value={appConfig.name} onChange={onChange} fullWidth/>
-          <FormControl fullWidth>
-            <InputLabel id="app-type-label">Type</InputLabel>
-            <Select
-              required
-              error={!!errors.type}
-              labelId="app-type-label"
-              value={appConfig.type}
-              label="Type"
-              name="type"
-              onChange={onChange}
-            >
-              {Object.values(AppType).map((type) => (
-                <MenuItem value={type} key={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </Box>
         <Box sx={{p: 2, display: 'flex', flexDirection: 'row', gap: 2}}>
           <TextField required error={!!errors.url} label="Url" name="url" value={appConfig.url} onChange={onChange} fullWidth/>

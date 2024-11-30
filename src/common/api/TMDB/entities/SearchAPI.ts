@@ -36,11 +36,11 @@ export class SearchAPI extends BaseEntityAPI {
       language,
       page: currentPage
     })
-    results = resp.data.results
     if(!include_adult) {
-      return results
+      return resp
     }
 
+    results = resp.data.results
     do {
       resp = await this._get<Response, any>(`search/${type}`, {
         query,

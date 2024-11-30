@@ -12,19 +12,20 @@ const ModalPopupPaper = styled(Paper)(({ theme }) => ({
   p: 4,
   width: '80dvw',
   minWidth: 500,
+  maxWidth: '95dvw',
+  maxHeight: '95dvh',
+  overflow: 'auto',
 }))
 
 
-const ModalPopup = ({ children, title, onClose }: { children: ReactNode, title: string, onClose: () => void }) => {
+const ModalPopup = ({ children, title, onClose }: { children: ReactNode, title?: string, onClose: () => void }) => {
   return (
     <Modal
       onClose={onClose}
       open={true}
     >
       <ModalPopupPaper>
-        <Typography id="modal-modal-title" variant="h6" component="h2">
-          {title}
-        </Typography>
+        {title && <Typography variant="h6" component="h2">{title}</Typography>}
         {children}
       </ModalPopupPaper>
     </Modal>

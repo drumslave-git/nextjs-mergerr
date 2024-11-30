@@ -11,37 +11,37 @@ datasource db {
 }
 
 model App {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  type    String
-  url     String   @unique
-  public_url String? @unique
-  api_key String   @unique
-  merges  Merge[]  @relation("AppMerges")
+  id         String  @id @default(cuid())
+  name       String  @unique
+  type       String
+  url        String  @unique
+  public_url String? @default("")
+  api_key    String  @unique
+  merges     Merge[] @relation("AppMerges")
 }
 
 model Merge {
-  id        String   @id @default(cuid())
-  inputs    Input[]  @relation("MergeInputs")
-  output    String   @unique
-  progress  Int
-  error     String?
-  result    String?
-  status    String
-  app       App      @relation(fields: [app_id], references: [id], name: "AppMerges", onDelete: Cascade)
-  app_id    String
+  id       String  @id @default(cuid())
+  inputs   Input[] @relation("MergeInputs")
+  output   String  @unique
+  progress Int
+  error    String?
+  result   String?
+  status   String
+  app      App     @relation(fields: [app_id], references: [id], name: "AppMerges", onDelete: Cascade)
+  app_id   String
 }
 
 model Input {
-  id        String   @id @default(cuid())
-  name      String
-  path      String
-  merge     Merge    @relation(fields: [merge_id], references: [id], name: "MergeInputs", onDelete: Cascade)
-  merge_id  String
+  id       String @id @default(cuid())
+  name     String
+  path     String
+  merge    Merge  @relation(fields: [merge_id], references: [id], name: "MergeInputs", onDelete: Cascade)
+  merge_id String
 }
 
 model TMDB {
-  key String @id
-  lastRequestAt DateTime?
-  requestesCount Int @default(0)
+  key            String    @id
+  lastRequestAt  DateTime?
+  requestesCount Int       @default(0)
 }

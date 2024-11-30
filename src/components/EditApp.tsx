@@ -51,7 +51,7 @@ export default function EditApp({app}: { app?: App }) {
       ...appConfig,
       [e.target.name]: e.target.value
     }
-    const errors = validate(appConfig)
+    const errors = validate(config)
     setDisableButtons(Object.keys(errors).length > 0)
     setAppConfig(config)
   }, [appConfig])

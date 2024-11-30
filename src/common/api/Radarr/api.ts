@@ -2,9 +2,11 @@
 import {BaseAPI, BaseConfig} from "@/common/api/BaseAPI"
 import {ManualImportAPI} from "@/common/api/Radarr/entities/ManualImportAPI"
 import {MovieLookupAPI} from "@/common/api/Radarr/entities/MovieLookupAPI"
+import {QualityProfileAPI} from "@/common/api/Radarr/entities/QualityProfileAPI"
 import {QueueAPI} from "@/common/api/Radarr/entities/QueueAPI"
+import {RootFolderAPI} from "@/common/api/Radarr/entities/RootFolderAPI"
 import {SystemAPI} from "@/common/api/Radarr/entities/SystemAPI"
-import { MovieAPI } from "@/common/api/Radarr/entities/MovieAPI"
+import {MovieAPI, MovieAddSetting} from "@/common/api/Radarr/entities/MovieAPI"
 
 // Define the configuration type for the API
 export interface RadarrAPIConfig extends BaseConfig {}
@@ -17,6 +19,8 @@ export class RadarrAPI extends BaseAPI<RadarrAPIConfig>{
   public queue: QueueAPI
   public manualImport: ManualImportAPI
   public movieLookup: MovieLookupAPI
+  public rootFolder: RootFolderAPI
+  public qualityProfile: QualityProfileAPI
 
   constructor(config: RadarrAPIConfig) {
     super({
@@ -32,5 +36,32 @@ export class RadarrAPI extends BaseAPI<RadarrAPIConfig>{
     this.queue = new QueueAPI(this._axiosInstance)
     this.manualImport = new ManualImportAPI(this._axiosInstance)
     this.movieLookup = new MovieLookupAPI(this._axiosInstance)
+    this.rootFolder = new RootFolderAPI(this._axiosInstance)
+    this.qualityProfile = new QualityProfileAPI(this._axiosInstance)
+  }
+
+  async addByTMDB(tmdbId: number, options: MovieAddSetting) {
+    const resp = await this.movieLookup.tmdb(tmdbId)
+    if (!resp.data) {
+      throw new Error(`No movie found for TMDB ID: ${tmdbId}`)
+    }
+
+    const data = {
+      ...resp.data,
+      ...options
+    }
+
+    const result = await this.movie.add(data)
+    if (result.status === 201) {
+      return result
+    }
+    
+    return {
+      ...result,
+      data: {
+        ...result.data,
+        postedDataWas: data
+      }
+    }
   }
 }

@@ -1,4 +1,5 @@
 import {BaseEntityAPI} from "@/common/api/BaseEntityAPI"
+import {MovieLookupResult} from "@/common/api/Radarr/entities/MovieLookupAPI"
 
 // Define types for movie-related data
 export interface Movie {
@@ -23,24 +24,28 @@ export interface MovieResponse extends Movie {
   id: number;
 }
 
-// Define a type for a paginated movie response (optional, if needed for advanced listing)
-export interface MoviePagingResponse {
-  page: number;
-  pageSize: number;
-  records: number;
-  movies: MovieResponse[];
+export interface MovieAddSetting {
+  addOptions: { monitor: 'movieOnly' | 'movieAndCollection' | 'none'; searchForMovie: boolean };
+  rootFolderPath: string;
+  qualityProfileId: number;
+  monitored: boolean;
+  minimumAvailability: 'released' | 'inCinemas' | 'announced';
+  tags: [];
 }
+
+export interface MovieAddData extends MovieLookupResult, MovieAddSetting {}
+
 
 export class MovieAPI extends BaseEntityAPI {
 
   // Method to get all movies
-  async get(id?: number | string) {
-    return await this._get<MovieResponse[] | Movie, any>("movie" + (id ? `/${id}` : ''))
+  async get(id?: number | string, tmdbId?: number) {
+    return await this._get<MovieResponse[] | Movie, any>("movie" + (id ? `/${id}` : ''), { tmdbId })
   }
 
   // Method to add a new movie
-  async add(movie: Movie) {
-    return await this._post<MovieResponse>("movie", movie)
+  async add(movie: MovieAddData) {
+    return await this._post<MovieResponse, any>("movie", movie)
   }
 
   // Method to delete a movie by ID

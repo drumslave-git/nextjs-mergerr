@@ -17,8 +17,13 @@ export class BaseEntityAPI {
     }
   }
 
-  protected async _post<T>(uri: string, data: any = {}, params: any = {}): Promise<AxiosResponse<T, any>> {
-    return await this._axios.post<T>(`/${uri}?${qs.stringify(params)}`, data)
+  protected async _post<T, E>(uri: string, data: any = {}, params: any = {}): Promise<AxiosResponse<T, any> | AxiosResponse<E, any>> {
+    try {
+      return await this._axios.post<T>(`/${uri}?${qs.stringify(params)}`, data)
+    } catch (e) {
+      const error = e as AxiosError
+      return error.response as AxiosResponse<E, any>
+    }
   }
 
   protected async _put<T>(uri: string, data: any = {}, params: any = {}): Promise<AxiosResponse<T, any>> {

@@ -28,12 +28,18 @@ import {SxProps} from "@mui/system/styleFunctionSx/"
 import {App} from "@prisma/client"
 import Link from "next/link"
 import {useSearchParams} from "next/navigation"
-import {ReactNode, useCallback, useEffect, useMemo, useState} from "react"
+import {ReactNode, useCallback, useEffect, useMemo, useRef, useState} from "react"
 
-const Img = styled('img')(({theme}) => ({
+const Img = styled('img')(() => ({
   width: '100%',
   height: 'auto',
   objectFit: 'cover',
+}))
+
+const SearchIconButton = styled(IconButton)(() => ({
+  aspectRatio: 1,
+  height: '100%',
+  alignSelf: 'center',
 }))
 
 const TMDBImage = ({item, type, size, sx}: {item: MovieResult, type: 'poster', size: number, sx?: SxProps}) => {
@@ -135,8 +141,11 @@ const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieRespon
       if(data.tmdbId) {
         onClose(data.tmdbId)
       } else {
-        if(data.length > 0) {
-          data.forEach((error: {errorMessage: string}) => {
+        if (data.postedDataWas) {
+          console.error('Failed to add movie', data)
+        }
+        if(data.errors && data.errors.length > 0) {
+          data.errors.forEach((error: {errorMessage: string}) => {
             addNotification({
               title: 'Error',
               message: error.errorMessage,
@@ -281,18 +290,28 @@ const AdditionalInfo = ({item, movies, results}: { item: Item, movies: MovieResp
 
 }
 
+const SearchResults = (props: { results: MovieResult[], items: Item[], movies: MovieResponse[], onClick: (id: number) => void }) => {
+  const {results, items, movies, onClick} = props
+
+  return (
+    <Grid
+      items={items}
+      ActionComponent={({item, children}) => <ActionComponent item={item} onClick={onClick}>{children}</ActionComponent>}
+      AdditionalContentComponent={({item}) => <AdditionalInfo item={item} results={results} movies={movies} />}
+    />
+  )
+}
+
 export default function SearchPage({params}: { params: { id: string } }) {
   const searchParams = useSearchParams()
 
-  const [results, setResults] = useState<MovieResult[]>([])
+  const [results, setResults] = useState<MovieResult[] | undefined>(undefined)
   const [movies, setMovies] = useState<MovieResponse[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [genres, setGenres] = useState<Genre[] | null>(null)
   const [query, setQuery] = useState(searchParams.get('term') || '')
   const [searching, setSearching] = useState(false)
   const [detailsForID, setDetailsForID] = useState<number | null>(null)
-
-  const theme = useTheme()
 
   const {ok, configuration, formatImagePath} = useTMDBApi()
 
@@ -307,14 +326,18 @@ export default function SearchPage({params}: { params: { id: string } }) {
   }, [ok])
 
   useEffect(() => {
-    Promise.all(results.map(result => fetch(`/api/app/${params.id}/movie?tmdbId=${result.id}`).then(res => res.json())))
-      .then(data => {
-        setMovies(data.filter((movies: MovieResponse[]) => !!movies.at(0)).map((movies: MovieResponse[]) => movies.at(0) as MovieResponse))
-      })
+    if(results) {
+      Promise.all(results.map(result => fetch(`/api/app/${params.id}/movie?tmdbId=${result.id}`).then(res => res.json())))
+        .then(data => {
+          setMovies(data.filter((movies: MovieResponse[]) => !!movies.at(0)).map((movies: MovieResponse[]) => movies.at(0) as MovieResponse))
+        })
+    }
   }, [params.id, results])
 
   const search = useCallback(() => {
     setSearching(true)
+    setResults(undefined)
+    setItems([])
     fetch(`/api/app/${params.id}/search/${encodeURIComponent(query)}/tmdb`)
       .then(res => res.json())
       .then(data => {
@@ -339,6 +362,10 @@ export default function SearchPage({params}: { params: { id: string } }) {
         })
     }
     setDetailsForID(null)
+  }, [params.id])
+
+  const onQueryChange = useCallback((e) => {
+    setQuery(e.target.value)
   }, [])
 
   if (!ok || !genres) {
@@ -348,33 +375,31 @@ export default function SearchPage({params}: { params: { id: string } }) {
   }
 
   return (
-    <>
+    <Stack spacing={2}>
       <Card>
         <CardContent>
           <Stack direction="row" spacing={2}>
-            <TextField label="Search" variant="standard" value={query} onChange={e => setQuery(e.target.value)}
+            <TextField label="Search" variant="standard" value={query} onChange={onQueryChange}
                        fullWidth/>
-            <IconButton aria-label="delete" onClick={search} sx={{aspectRatio: 1, height: '100%', alignSelf: 'center'}}>
+            <SearchIconButton aria-label="delete" onClick={search}>
               <SearchIcon />
-            </IconButton>
+            </SearchIconButton>
           </Stack>
         </CardContent>
       </Card>
-      <Card sx={{marginTop: theme.spacing(2)}}>
+      <Card>
         <CardContent>
-          {results.length === 0 && (
-            <Typography>{query ? `no results for: ${query}` : 'Try to search for something'}</Typography>
+          {results && results.length === 0 && (
+            <Typography>{`no results for: ${query}`}</Typography>
           )}
-          <Grid
-            items={items}
-            ActionComponent={({item, children}) => <ActionComponent item={item} onClick={setDetailsForID}>{children}</ActionComponent>}
-            AdditionalContentComponent={({item}) => <AdditionalInfo item={item} results={results} movies={movies} />}
-          />
+          {results && (
+            <SearchResults results={results} movies={movies} items={items} onClick={setDetailsForID} />
+          )}
         </CardContent>
       </Card>
       {detailsForID && (
         <Details id={detailsForID} movies={movies} appId={params.id} onClose={onDetailsClose} />
       )}
-    </>
+    </Stack>
   )
 }

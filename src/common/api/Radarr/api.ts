@@ -55,7 +55,17 @@ export class RadarrAPI extends BaseAPI<RadarrAPIConfig>{
     if (result.status === 201) {
       return result
     }
-    
+
+    if (Array.isArray(result.data)) {
+      return {
+        ...result,
+        data: {
+          errors: result.data,
+          postedDataWas: data
+        }
+      }
+    }
+
     return {
       ...result,
       data: {

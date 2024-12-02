@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mergerr
+    ports:
+      - 3000:3000
+      - 5555:5555
+    volumes:
+      - ./config:/app/config
+    environment:
+      NEXT_WEBPACK_USEPOLLING: 1
+    restart: always

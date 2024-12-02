@@ -14,7 +14,7 @@ RUN npm ci --force
 
 COPY . .
 
-RUN npm run db:migrate:deploy
+RUN npm run db:push
 RUN npm run db:generate
 RUN npm run build
 

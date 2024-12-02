@@ -1,4 +1,5 @@
-import withTMDBApi, {NextRequestWithTMDBApi} from "@/lib/withTMDBApi"
+import withTMDBApi from "@/lib/withTMDBApi"
+import {NextRequestWithTMDBApi} from "@/middleware/tmdbMiddleware"
 
 const getHandler = async (req: NextRequestWithTMDBApi, {params}: {params: {type: 'tv' | 'movie'}}) => {
   const resp = await req.tmdbAPI.genres[params.type]()

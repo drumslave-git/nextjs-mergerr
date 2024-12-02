@@ -1,6 +1,6 @@
 'use client'
 
-import {Movie, MovieAddSetting, MovieResponse} from "@/common/api/Radarr/entities/MovieAPI"
+import {MovieAddSetting, MovieResponse} from "@/common/api/Radarr/entities/MovieAPI"
 import {QualityProfile} from "@/common/api/Radarr/entities/QualityProfileAPI"
 import {RootFolder} from "@/common/api/Radarr/entities/RootFolderAPI"
 import {Genre} from "@/common/api/TMDB/entities/GenresAPI"
@@ -10,8 +10,11 @@ import Grid, {Item} from "@/components/common/ItemsLayout/Grid"
 import ModalPopup from "@/components/common/ModalPopup"
 import {useNotifications} from "@/components/NotificationsProvider"
 import {useTMDBApi} from "@/components/TMDBApiProvider"
-import {CheckCircle} from "@mui/icons-material"
-import {FormControl, InputLabel, MenuItem, Select} from "@mui/material"
+import CheckCircle from "@mui/icons-material/CheckCircle"
+import Select from "@mui/material/Select"
+import MenuItem from "@mui/material/MenuItem"
+import InputLabel from "@mui/material/InputLabel"
+import FormControl from "@mui/material/FormControl"
 import Grid2 from "@mui/material/Grid2"
 import Button from "@mui/material/Button"
 import Card from "@mui/material/Card"
@@ -23,12 +26,11 @@ import Typography from "@mui/material/Typography"
 import IconButton from "@mui/material/IconButton"
 import SearchIcon from '@mui/icons-material/Search'
 import Stack from '@mui/material/Stack'
-import useTheme from "@mui/material/styles/useTheme"
-import {SxProps} from "@mui/system/styleFunctionSx/"
 import {App} from "@prisma/client"
 import Link from "next/link"
 import {useSearchParams} from "next/navigation"
 import {ReactNode, useCallback, useEffect, useMemo, useRef, useState} from "react"
+import { SxProps } from "@mui/material/styles"
 
 const Img = styled('img')(() => ({
   width: '100%',
@@ -364,7 +366,7 @@ export default function SearchPage({params}: { params: { id: string } }) {
     setDetailsForID(null)
   }, [params.id])
 
-  const onQueryChange = useCallback((e) => {
+  const onQueryChange = useCallback((e: any) => {
     setQuery(e.target.value)
   }, [])
 

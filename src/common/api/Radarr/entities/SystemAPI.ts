@@ -18,12 +18,12 @@ export interface SystemStatus {
 export class SystemAPI extends BaseEntityAPI {
   // Method to get system status
   async getStatus() {
-    return await this._get<SystemStatus>("system/status")
+    return await this._get<SystemStatus, any>("system/status")
   }
 
   // Method to get system logs
   async getLogs() {
-    return await this._get<string[]>("log")
+    return await this._get<string[], any>("log")
   }
 
   // Method to trigger application restart
@@ -38,6 +38,6 @@ export class SystemAPI extends BaseEntityAPI {
 
   // Method to get Radarr's current backup list
   async getBackups() {
-    return await this._get<string[]>("backup")
+    return await this._get<string[], any>("backup")
   }
 }

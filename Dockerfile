@@ -10,11 +10,10 @@ WORKDIR /app
 COPY package.json .
 COPY package-lock.json .
 
-RUN npm ci
+RUN npm ci --force
 
 COPY . .
 
-RUN npm run db:push
 RUN npm run db:generate
 RUN npm run build
 

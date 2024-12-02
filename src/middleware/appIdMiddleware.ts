@@ -5,7 +5,7 @@ import {NextRequestWithApi} from "@/lib/withApi"
 
 export default async function appIdMiddleware(
   req: NextRequestWithApi,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } & any }
 ) {
   if (!params.id) {
     return Response.json({ message: 'appId is required' }, {status: 404})

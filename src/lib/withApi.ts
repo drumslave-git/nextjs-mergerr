@@ -6,9 +6,9 @@ import {NextRequest} from "next/server"
 export type NextRequestWithApi = NextRequest & {api: RadarrAPI | WhisparrAPI}
 
 export default function withApi(
-  handler: (req: NextRequestWithApi, { params }: { params: { id: string } & Record<string, any> }) => any | Promise<any>
+  handler: (req: NextRequestWithApi, { params }: { params: { id: string } & any }) => any | Promise<any>
 ) {
-  return async (req: NextRequestWithApi, { params }: { params: { id: string } & Record<string, any> }) => {
+  return async (req: NextRequestWithApi, { params }: { params: { id: string } & any }) => {
     await appIdMiddleware(req, {params})
     return handler(req, {params})
   }

@@ -1,5 +1,6 @@
 import {prisma} from "@/lib/prisma"
-import withTMDBApi, {NextRequestWithTMDBApi} from "@/lib/withTMDBApi"
+import withTMDBApi from "@/lib/withTMDBApi"
+import {NextRequestWithTMDBApi} from "@/middleware/tmdbMiddleware"
 
 const postHandler = async (req: NextRequestWithTMDBApi) => {
   const data = await req.json()

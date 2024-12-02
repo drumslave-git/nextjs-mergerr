@@ -1,4 +1,4 @@
-import {ManualImportOptions} from "@/common/api/entities/ManualImportAPI"
+import {ManualImportOptions} from "@/common/api/Radarr/entities/ManualImportAPI"
 import {ApiEndpoints, AppType} from "@/consts"
 import withApi, {NextRequestWithApi} from "@/lib/withApi"
 import qs from "qs"

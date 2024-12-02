@@ -1,3 +1,4 @@
+import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"
 import formatOutputFilePath from "@/lib/formatOutputFilePath"
 import withApi, {NextRequestWithApi} from "@/lib/withApi"
 
@@ -7,10 +8,10 @@ async function deleteHandler(req: NextRequestWithApi, { params }: { params: { id
   return Response.json(resp.data, {status: resp.status})
 }
 
-export async function getHandler(req: NextRequestWithApi, { params }: { params: { id: string, movieId: string } }) {
+async function getHandler(req: NextRequestWithApi, { params }: { params: { id: string, movieId: string } }) {
   const resp = await req.api.queue.details(params.movieId)
 
-  return Response.json(resp.data.map(record => ({
+  return Response.json(resp.data.map((record: QueueEntry) => ({
     ...record,
     mergerrOutputFile: formatOutputFilePath(record)
   })), {status: resp.status})

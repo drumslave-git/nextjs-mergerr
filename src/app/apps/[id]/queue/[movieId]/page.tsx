@@ -1,6 +1,6 @@
 'use client'
 
-import {QueueEntry} from "@/common/api/entities/QueueAPI"
+import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"
 import {useEffect, useState} from "react"
 
 export default function QueueEntryPage({ params }: { params: { id: string, movieId: string } }) {

@@ -2,7 +2,7 @@ import { BaseEntityAPI } from "@/common/api/BaseEntityAPI"
 
 export interface RootFolder {
   id: number
-  oath: string
+  path: string
   accessible: boolean
   freeSpace: number
   unmappedFolders: {

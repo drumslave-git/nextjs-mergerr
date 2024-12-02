@@ -15,7 +15,7 @@ export class TMDBApi {
   configuration: ConfigurationAPI
   movie: MovieAPI
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string = '') {
     this._apiKey = apiKey
     this._axiosInstance = axios.create({
       baseURL: 'https://api.themoviedb.org/3',

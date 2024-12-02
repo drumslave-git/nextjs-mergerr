@@ -1,4 +1,5 @@
 'use client'
+import {SystemStatus} from "@/common/api/Radarr/entities/SystemAPI"
 import {useNotifications} from "@/components/NotificationsProvider"
 import Box from "@mui/material/Box"
 import {useRouter} from "next/navigation"
@@ -66,13 +67,19 @@ export default function EditApp({app}: { app?: App }) {
     fetch('/api/app/test', {
       method: 'POST',
       body: JSON.stringify(appConfig),
-    }).then(res => res.json()).then(data => {
-      const type = data.appName.toLowerCase()
+    }).then(res => {
+      if (res.status !== 200) {
+        throw new Error(`${res.status} - ${res.statusText}`)
+      }
+      return res.json()
+    }).then((data: SystemStatus) => {
+      const type = data?.appName?.toLowerCase()
       // @ts-ignore
       if(!AppType[type]) {
+        console.error(data)
         addNotification({
           title: 'Error',
-          message: 'Invalid app type',
+          message: `Invalid app type: ${type?.toString()}`,
           type: 'error',
         })
         return
@@ -84,6 +91,11 @@ export default function EditApp({app}: { app?: App }) {
       setTested(true)
     }).catch(err => {
       console.error(err)
+      addNotification({
+        title: 'Error',
+        message: err.message,
+        type: 'error',
+      })
       setTested(false)
     })
       .finally(() => {

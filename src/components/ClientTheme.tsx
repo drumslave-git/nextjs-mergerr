@@ -1,5 +1,6 @@
 'use client'
 
+import StyledEngineProvider from "@mui/material/StyledEngineProvider"
 import CssBaseline from "@mui/material/CssBaseline"
 import {useMemo} from "react"
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -19,9 +20,10 @@ export default function ClientTheme(props: any) {
   )
 
   return (
-
-    <ThemeProvider theme={theme}>
-      <CssBaseline enableColorScheme /> {props.children}
-    </ThemeProvider>
+    <StyledEngineProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline enableColorScheme /> {props.children}
+      </ThemeProvider>
+    </StyledEngineProvider>
   )
 }

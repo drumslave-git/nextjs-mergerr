@@ -1,4 +1,5 @@
 import {TMDBApi} from "@/common/api/TMDB/api"
+import {SearchResponse} from "@/common/api/TMDB/entities/SearchAPI"
 import axios, {AxiosInstance, AxiosResponse} from "axios"
 
 export interface BaseConfig {
@@ -35,7 +36,7 @@ export class BaseAPI<Config extends BaseConfig> {
     }
   }
 
-  async tmdbSearch(query: string) {
+  async tmdbSearch(query: string, iterationCallback: (iteration: AxiosResponse<SearchResponse>) => void = () => {}) {
     if (!this._tmdbApi) {
       return {
         data: {},
@@ -43,6 +44,6 @@ export class BaseAPI<Config extends BaseConfig> {
       } as AxiosResponse
     }
 
-    return await this._tmdbApi.search[this._itemsType](query, this._adult)
+    return await this._tmdbApi.search[this._itemsType](query, this._adult, iterationCallback)
   }
 }

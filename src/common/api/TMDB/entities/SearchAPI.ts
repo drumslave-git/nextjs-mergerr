@@ -1,4 +1,5 @@
 import {BaseEntityAPI} from "@/common/api/BaseEntityAPI"
+import {AxiosResponse} from "axios"
 
 export interface MovieResult {
   adult: boolean;
@@ -19,15 +20,17 @@ export interface MovieResult {
   vote_count: number;
 }
 
-export interface MovieResponse {
+export interface TVResult extends MovieResult{}
+
+export interface SearchResponse {
   page: number;
-  results: MovieResult[];
+  results: MovieResult[] | TVResult[];
   total_pages: number;
   total_results: number;
 }
 
 export class SearchAPI extends BaseEntityAPI {
-  async generic<Result extends {adult: boolean}, Response>(type: 'tv' | 'movie', query: string, include_adult = false, language = 'en-US', page = 1) {
+  async generic<Result extends {adult: boolean}, Response>(type: 'tv' | 'movie', query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<Response>) => {}, language = 'en-US', page = 1) {
     let results: Result[] = []
     let currentPage = page
     let resp = await this._get<Response, any>(`search/${type}`, {
@@ -36,11 +39,16 @@ export class SearchAPI extends BaseEntityAPI {
       language,
       page: currentPage
     })
-    if(!include_adult) {
-      return resp
-    }
 
-    results = resp.data.results
+    results = resp.data.results.filter((result: Result) => result.adult)
+    iterationCallback({
+      ...resp,
+      data: {
+        ...resp.data,
+        results
+      }
+    })
+
     do {
       resp = await this._get<Response, any>(`search/${type}`, {
         query,
@@ -48,20 +56,29 @@ export class SearchAPI extends BaseEntityAPI {
         language,
         page: ++currentPage
       })
-      results = results.concat(resp.data.results)
+      const iterationResults = resp.data.results.filter((result: Result) => result.adult)
+      iterationCallback({
+        ...resp,
+        data: {
+          ...resp.data,
+          results: iterationResults
+        }
+      })
+      results = results.concat(iterationResults)
     } while (resp.data.results.length > 0)
+
     return {
       ...resp,
       data: {
         ...resp.data,
-        results: results.filter(result => result.adult)
+        results
       }
     }
   }
-  async tv(query: string, include_adult = false, language = 'en-US', page = 1) {
-    return await this.generic<MovieResult, MovieResponse>('tv', query, include_adult, language, page)
+  async tv(query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => {}, language = 'en-US', page = 1) {
+    return await this.generic<TVResult, SearchResponse>('tv', query, include_adult, iterationCallback, language, page)
   }
-  async movie(query: string, include_adult = false, language = 'en-US', page = 1) {
-    return await this.generic<MovieResult, MovieResponse>('movie', query, include_adult, language, page)
+  async movie(query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => {}, language = 'en-US', page = 1) {
+    return await this.generic<MovieResult, SearchResponse>('movie', query, include_adult, iterationCallback, language, page)
   }
 }

@@ -9,6 +9,8 @@ import CircularProgressWithLabel from "@/components/common/CircularProgressWithL
 import InfinitProgressOverlay from "@/components/common/InfinitProgressOverlay"
 import Grid, {Item} from "@/components/common/ItemsLayout/Grid"
 import ModalPopup from "@/components/common/ModalPopup"
+import {TMDBImage} from "@/components/common/TMDB/Image"
+import Rating from "@/components/common/TMDB/Rating"
 import {useNotifications} from "@/components/NotificationsProvider"
 import {useTMDBApi} from "@/components/TMDBApiProvider"
 import CheckCircle from "@mui/icons-material/CheckCircle"
@@ -32,14 +34,7 @@ import {App} from "@prisma/client"
 import Link from "next/link"
 import {useSearchParams} from "next/navigation"
 import {ReactNode, useCallback, useEffect, useMemo, useRef, useState} from "react"
-import {SxProps, alpha } from "@mui/material/styles"
-
-const Img = styled('img')(() => ({
-  width: '100%',
-  height: 'auto',
-  objectFit: 'cover',
-  borderRadius: '4px',
-}))
+import {alpha } from "@mui/material/styles"
 
 const SearchIconButton = styled(IconButton)(() => ({
   aspectRatio: 1,
@@ -52,20 +47,6 @@ const getReleaseYear = (releaseDate?: string) => {
     return ''
   }
   return new Date(releaseDate).getFullYear()
-}
-
-const TMDBImage = ({item, type, size, sx}: {item: MovieResult, type: 'poster' | 'backdrop', size: number, sx?: SxProps}) => {
-  const {ok, configuration, formatImagePath} = useTMDBApi()
-
-  const path = useMemo(() => {
-    return item[`${type}_path`]
-  }, [item, type])
-
-  if(!ok || !configuration || !path) {
-    return null
-  }
-
-  return <Img src={formatImagePath(path, configuration.images[`${type}_sizes`].at(size) || '')} alt={item.title} sx={sx} />
 }
 
 const ActionComponent = ({item, children, onClick}: { item: Item, children: ReactNode, onClick: (id: number) => void }) => {
@@ -83,12 +64,13 @@ const SemiTransparentCard = styled(Card)(({ theme }) => ({
   backgroundColor: alpha(theme.palette.background.paper, 0.9),
 }))
 
-const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieResponse[], appId: string, onClose: (tmdbId?: number) => void }) => {
+const Details = ({id, appId, onClose}: { id: number, appId: string, onClose: (tmdbId?: number) => void }) => {
   const {addNotification} = useNotifications()
 
   const [details, setDetails] = useState<MovieResult | null>(null)
   const [addingMovie, setAddingMovie] = useState(false)
   const [app, setApp] = useState<App | null>(null)
+  const [addedMovie, setAddedMovie] = useState<boolean | undefined>(undefined)
   const [newMovie, setNewMovie] = useState<{tmdbId: string, options: MovieAddSetting}>({
     tmdbId: String(id),
     options: {
@@ -105,10 +87,6 @@ const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieRespon
   })
   const [rootFolders, setRootFolders] = useState<RootFolder[]>([])
   const [qualityProfiles, setQualityProfiles] = useState<QualityProfile[]>([])
-
-  const addedMovie = useMemo(() => {
-    return movies.find(m => m.tmdbId === id)
-  }, [id, movies])
 
   const releaseYear = useMemo(() => {
     if(!details) {
@@ -130,6 +108,12 @@ const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieRespon
         setDetails(data)
       })
   }, [id])
+
+  useEffect(() => {
+    fetch(`/api/app/${appId}/movie?tmdbId=${id}`).then(res => res.json()).then(data => {
+      setAddedMovie(data.length > 0)
+    })
+  }, [appId, id])
 
   useEffect(() => {
     if(!addedMovie) {
@@ -230,7 +214,7 @@ const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieRespon
 
   return (
     <ModalPopup onClose={onCloseHandler}>
-      {details ? (
+      {details && addedMovie !== undefined ? (
         <Grid2 container spacing={2} padding={2}>
           {addingMovie && <InfinitProgressOverlay zIndex={3} />}
           <Grid2 size={{xs: 12, sm: 5, md: 4}}>
@@ -312,7 +296,7 @@ const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieRespon
             <Stack justifyContent="center" direction="row" width="100%">
               {addedMovie
                 ? (
-                  <Link href={`${app.public_url || app.url}/movie/${addedMovie.tmdbId}`} target="_blank" passHref>
+                  <Link href={`${app.public_url || app.url}/movie/${id}`} target="_blank" passHref>
                     <Button variant="contained" color="success">View in {app.name}</Button>
                   </Link>
                 )
@@ -330,46 +314,40 @@ const Details = ({id, movies, appId, onClose}: { id: number, movies: MovieRespon
   )
 }
 
-const AdditionalInfo = ({item, movies, results}: { item: Item, movies: MovieResponse[], results: MovieResult[] }) => {
+const AdditionalInfo = ({item, results, appId}: { item: Item, results: MovieResult[], appId: string }) => {
+  const [addedMovie, setAddedMovie] = useState(false)
+
   const result = useMemo(() => {
     return results.find(r => r.id === Number(item.id)) as MovieResult
   }, [item.id, results])
-  const addedMovie = useMemo(() => {
-    return movies.find(m => m.tmdbId === Number(item.id))
-  }, [item.id, movies])
 
-  const voteAverage = useMemo(() => {
-    return result.vote_average || 0
-  }, [result.vote_average])
+  useEffect(() => {
+    fetch(`/api/app/${appId}/movie?tmdbId=${item.id}`).then(res => res.json()).then(data => {
+      setAddedMovie(data.length > 0)
+    })
+  }, [appId, item.id])
 
-  const voteColor = useMemo(() => {
-    if(voteAverage < 4) {
-      return 'error'
-    }
-    if(voteAverage < 7) {
-      return 'warning'
-    }
-    return 'success'
-  }, [voteAverage])
+  if (!result) {
+    return null
+  }
 
   return (
     <Stack direction="row" spacing={2} justifyContent="space-between" paddingTop={2}>
-      <CircularProgressWithLabel value={voteAverage} color={voteColor} label={voteAverage} thickness={10} size={33.35} />
+      <Rating value={result.vote_average} />
       <CheckCircle fontSize="large" sx={{width: '40px', height: '40px'}} color={addedMovie ? 'success' : 'error'} />
     </Stack>
   )
-
 }
 
-const SearchResults = (props: { results: MovieResult[], items: Item[], movies: MovieResponse[], onClick: (id: number) => void }) => {
-  const {results, items, movies, onClick} = props
+const SearchResults = (props: { results: MovieResult[], items: Item[], appId: string, onClick: (id: number) => void }) => {
+  const {results, items, appId, onClick} = props
 
   return (
     <Grid
       items={items}
       aspectRatio={.5}
       ActionComponent={({item, children}) => <ActionComponent item={item} onClick={onClick}>{children}</ActionComponent>}
-      AdditionalContentComponent={({item}) => <AdditionalInfo item={item} results={results} movies={movies} />}
+      AdditionalContentComponent={({item}) => <AdditionalInfo item={item} results={results} appId={appId} />}
     />
   )
 }
@@ -378,13 +356,14 @@ export default function SearchPage({params}: { params: { id: string } }) {
   const searchParams = useSearchParams()
 
   const [results, setResults] = useState<MovieResult[] | undefined>(undefined)
-  const [movies, setMovies] = useState<MovieResponse[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [genres, setGenres] = useState<Genre[] | null>(null)
   const [searching, setSearching] = useState(false)
   const [detailsForID, setDetailsForID] = useState<number | null>(null)
 
   const {ok, configuration, formatImagePath} = useTMDBApi()
+
+  const eventSource = useRef<EventSource>()
 
   useEffect(() => {
     if (ok) {
@@ -395,15 +374,6 @@ export default function SearchPage({params}: { params: { id: string } }) {
         })
     }
   }, [ok])
-
-  useEffect(() => {
-    if(results) {
-      Promise.all(results.map(result => fetch(`/api/app/${params.id}/movie?tmdbId=${result.id}`).then(res => res.json())))
-        .then(data => {
-          setMovies(data.filter((movies: MovieResponse[]) => !!movies.at(0)).map((movies: MovieResponse[]) => movies.at(0) as MovieResponse))
-        })
-    }
-  }, [params.id, results])
 
   useEffect(() => {
     if(!results) {
@@ -433,17 +403,28 @@ export default function SearchPage({params}: { params: { id: string } }) {
     if (!term) {
       return
     }
-    setSearching(true)
-    fetch(`/api/app/${params.id}/search/${encodeURIComponent(term)}/tmdb`)
-      .then(res => res.json())
-      .then(data => {
-        setResults(data.results)
-      })
-      .finally(() => {
-        setSearching(false)
-      })
 
-  }, [params, configuration, formatImagePath])
+    if (eventSource.current) {
+      eventSource.current.close()
+      eventSource.current = undefined
+    }
+
+    eventSource.current = new EventSource(`/api/app/${params.id}/search/${encodeURIComponent(term)}/tmdb`)
+
+    eventSource.current.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      setResults(prev => prev ? [...prev, ...data.results] : data.results)
+    }
+
+    eventSource.current.onerror = () => {
+      if (eventSource.current) {
+        eventSource.current.close()
+        eventSource.current = undefined
+      }
+      setSearching(false)
+    }
+
+  }, [params])
 
   useEffect(() => {
     const term = searchParams.get('term')
@@ -452,15 +433,9 @@ export default function SearchPage({params}: { params: { id: string } }) {
     }
   }, [search, searchParams])
 
-  const onDetailsClose = useCallback((tmdbId?: number) => {
-    if(tmdbId) {
-      fetch(`/api/app/${params.id}/movie?tmdbId=${tmdbId}`).then(res => res.json())
-        .then(data => {
-          setMovies((prev) => [...prev, data.at(0) as MovieResponse])
-        })
-    }
+  const onDetailsClose = useCallback(() => {
     setDetailsForID(null)
-  }, [params.id])
+  }, [])
 
   if (!ok || !genres) {
     return (
@@ -492,12 +467,12 @@ export default function SearchPage({params}: { params: { id: string } }) {
             <Typography>{`no results found`}</Typography>
           )}
           {results && (
-            <SearchResults results={results} movies={movies} items={items} onClick={setDetailsForID} />
+            <SearchResults results={results} items={items} appId={params.id} onClick={setDetailsForID} />
           )}
         </CardContent>
       </Card>
       {detailsForID && (
-        <Details id={detailsForID} movies={movies} appId={params.id} onClose={onDetailsClose} />
+        <Details id={detailsForID} appId={params.id} onClose={onDetailsClose} />
       )}
     </Stack>
   )

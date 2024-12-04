@@ -12,8 +12,8 @@ export interface QueueEntry {
   timeleft: string;
   estimatedCompletionTime: string;
   status: string;
-  trackedDownloadState: string;
-  trackedDownloadStatus: string;
+  trackedDownloadState?: string;
+  trackedDownloadStatus?: string;
   downloadId: string;
   protocol: string;
   indexer: string;
@@ -29,7 +29,7 @@ export interface QueueEntry {
       real: number;
     };
   };
-  statusMessages: {
+  statusMessages?: {
     messages: string[];
     title: string;
   }[],
@@ -84,8 +84,16 @@ export class QueueAPI extends BaseEntityAPI {
     return record.trackedDownloadState === 'importPending'
   }
 
+  isCompleted(record: QueueEntry): boolean {
+    return record.status === 'completed'
+  }
+
+  hasStatusMessages(record: QueueEntry): boolean {
+    return !!record.statusMessages
+  }
+
   isMergable(record: QueueEntry): boolean {
-    return record.trackedDownloadStatus === 'warning' &&
-      record.statusMessages.filter((msg) => !!msg.messages.find((message) => message === 'Unable to parse file')).length > 1
+    return !!(record.trackedDownloadStatus === 'warning' && record.statusMessages &&
+      record.statusMessages.filter((msg) => !!msg.messages.find((message) => message === 'Unable to parse file')).length > 1)
   }
 }

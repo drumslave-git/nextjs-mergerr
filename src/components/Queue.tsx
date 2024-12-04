@@ -1,8 +1,8 @@
 'use client'
 
 import {Item} from "@/components/common/ItemsLayout/Grid"
-import Card from "@mui/material/Card"
-import CardContent from "@mui/material/CardContent"
+import useTheme from "@mui/material/styles/useTheme"
+import Chip from "@mui/material/Chip"
 import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
 import Link from "next/link"
@@ -14,9 +14,11 @@ import Typography from "@mui/material/Typography"
 import InfoIcon from "@mui/icons-material/Info"
 import CloseIcon from "@mui/icons-material/Close"
 import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"
-import CardMedia from "@mui/material/CardMedia"
 
 const Issues = ({record}: {record: QueueEntry}) => {
+  if(!record.statusMessages) {
+    return null
+  }
   return (
     <List>
       {record.statusMessages.map((statusMessage, statusMessageIndex) => (
@@ -37,26 +39,70 @@ const Issues = ({record}: {record: QueueEntry}) => {
   )
 }
 
+const DownloadingChip = ({record}: {record: QueueEntry}) => {
+  const theme = useTheme()
+
+  const percentage = useMemo(() => {
+    return Math.round(record.sizeleft * 100 / record.size)
+  }, [record.sizeleft, record.size])
+
+  const bgcolor = useMemo(() => {
+    if(percentage === 100) {
+      return theme.palette.success.main
+    }
+    if(percentage >= 80) {
+      return theme.palette.info.main
+    }
+    return theme.palette.warning.main
+  }, [percentage, theme])
+
+  return <Chip sx={{position: 'relative', overflow: 'hidden'}} title={`${percentage}%`} label={
+    <Box>
+      <Box position="absolute" left={0} top={0} width={`${percentage}%`} height="100%" bgcolor={bgcolor} />
+      <Typography position="relative">{record.trackedDownloadState}</Typography>
+    </Box>
+  } />
+}
+
+const Statuses = ({record}: {record: QueueEntry}) => {
+  return <Box paddingTop={2}>
+    <Chip label={record.status} />
+    {record.trackedDownloadState && record.sizeleft > 0 && (
+      <DownloadingChip record={record} />
+    )}
+    {record.trackedDownloadStatus && (
+      <Chip label={record.trackedDownloadStatus} />
+    )}
+  </Box>
+}
+
 const AdditionalInfo = ({records, item}: { records: QueueEntry[], item: Item }) => {
-  const record = records.find(r => r.id === item.id) as QueueEntry
+  const record = useMemo(() => records.find(r => r.id === item.id) as QueueEntry, [records, item.id])
   const [showInfo, setShowInfo] = useState<boolean>(false)
 
-  const onInfoToggle = useCallback(() => {
+  const onInfoToggle = useCallback((e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
     setShowInfo(v => !v)
   }, [])
 
-  return <Box sx={{position: 'absolute', inset: 0}}>
-    {!showInfo ?
-      <InfoIcon onClick={onInfoToggle} sx={{position: 'absolute', right: 0, top: 0, zIndex: 2, cursor: 'pointer'}} fontSize="large" />
-      :
-      <CloseIcon onClick={onInfoToggle} sx={{position: 'absolute', right: 0, top: 0, zIndex: 2, cursor: 'pointer'}} fontSize="large" />
-    }
-    {showInfo && (
-      <Box sx={{position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'background.paper', textAlign: 'left', overflow: 'auto'}}>
-        <Issues record={record} />
+  return <>
+    {record.statusMessages && (
+      <Box sx={{position: 'absolute', inset: 0}}>
+        {!showInfo ?
+          <InfoIcon onClick={onInfoToggle} sx={{position: 'absolute', right: 0, top: 0, zIndex: 2, cursor: 'pointer'}} fontSize="large" />
+          :
+          <CloseIcon onClick={onInfoToggle} sx={{position: 'absolute', right: 0, top: 0, zIndex: 2, cursor: 'pointer'}} fontSize="large" />
+        }
+        {showInfo && (
+          <Box sx={{position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'background.paper', textAlign: 'left', overflow: 'auto'}}>
+            <Issues record={record} />
+          </Box>
+        )}
       </Box>
     )}
-  </Box>
+    {/*<Statuses record={record} />*/}
+  </>
 }
 
 const RecordLink = ({records, item, app, children}: { records: QueueEntry[], item: Item, app: App, children: ReactNode }) => {

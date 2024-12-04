@@ -5,15 +5,15 @@ import {NextRequestWithApi} from "@/lib/withApi"
 
 export default async function appIdMiddleware(
   req: NextRequestWithApi,
-  { params }: { params: { id: string } & any }
+  id: string
 ) {
-  if (!params.id) {
+  if (!id) {
     return Response.json({ message: 'appId is required' }, {status: 404})
   }
 
   const app = await prisma.app.findUnique({
     where: {
-      id: params.id,
+      id,
     },
   })
 

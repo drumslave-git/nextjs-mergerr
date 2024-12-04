@@ -1,3 +1,4 @@
+import ScrollToTop from "@/components/common/ScrollToTop"
 import {TMDBApiProvider} from "@/components/TMDBApiProvider"
 import Version from "@/components/Version"
 import Box from "@mui/material/Box"
@@ -54,6 +55,7 @@ export default function RootLayout({
         </NotificationsProvider>
       </ClientTheme>
     </AppRouterCacheProvider>
+    <ScrollToTop />
     </body>
     </html>
   )

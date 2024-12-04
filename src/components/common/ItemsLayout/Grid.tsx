@@ -12,14 +12,13 @@ import {ReactElement, ReactNode, cloneElement, isValidElement} from "react"
 export interface Item {
   id: number | string;
   title: string;
-  image: string;
+  image?: string;
 }
 
 export const GridCell = styled(Paper)(({ theme }) => ({
   textAlign: 'center',
   width: '100%',
   height: 'auto',
-  aspectRatio: '.7',
   overflow: 'hidden',
   padding: 0,
 }))
@@ -33,9 +32,9 @@ export interface ItemComponentProps {
 export function ItemComponent({item, AdditionalContentComponent, ActionComponent}: ItemComponentProps) {
   return <Card sx={{height: '100%', position: 'relative'}} raised>
     <CardContent sx={{height: '100%'}}>
-      {AdditionalContentComponent && <AdditionalContentComponent item={item} />}
       <ActionComponent item={item}>
         <CardMedia image={item.image} title={item.title} sx={{height: '100%'}} />
+        {AdditionalContentComponent && <AdditionalContentComponent item={item} />}
         <Typography paddingTop={theme => theme.spacing(2)} component="div">{item.title}</Typography>
       </ActionComponent>
     </CardContent>
@@ -46,19 +45,20 @@ export interface GridComponentProps {
   items: Item[];
   AdditionalContentComponent?: (props: {item: Item} & Record<string, any>) => ReactElement;
   ActionComponent?: (props: {item: Item, children: ReactNode} & Record<string, any>) => ReactElement;
+  aspectRatio?: number
 }
 
 export function DefaultComponent({children}: {children?: ReactNode}) {
   return <Stack sx={{height: '100%'}}>{children}</Stack>
 }
 
-export default function GridComponent({items, AdditionalContentComponent, ActionComponent = DefaultComponent}: GridComponentProps) {
+export default function GridComponent({items, aspectRatio = .7, AdditionalContentComponent, ActionComponent = DefaultComponent}: GridComponentProps) {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Grid container spacing={1}>
         {items.map(item => (
           <Grid size={{xs: 12, sm: 6, md: 4, lg: 3}} key={item.id}>
-            <GridCell>
+            <GridCell sx={{aspectRatio}}>
               <ItemComponent item={item} AdditionalContentComponent={AdditionalContentComponent} ActionComponent={ActionComponent} />
             </GridCell>
           </Grid>

@@ -1,4 +1,4 @@
-import Modal from "@mui/material/Modal"
+import Modal, {ModalProps} from "@mui/material/Modal"
 import Paper from "@mui/material/Paper"
 import styled from "@mui/material/styles/styled"
 import Typography from "@mui/material/Typography"
@@ -18,10 +18,11 @@ const ModalPopupPaper = styled(Paper)(({ theme }) => ({
 }))
 
 
-const ModalPopup = ({ children, title, onClose }: { children: ReactNode, title?: string, onClose: () => void }) => {
+const ModalPopup = ({ children, title, onClose, ...rest }: { children: ReactNode, title?: string, onClose: () => void } & Omit<ModalProps, 'open'>) => {
   return (
     <Modal
       onClose={onClose}
+      {...rest}
       open={true}
     >
       <ModalPopupPaper>

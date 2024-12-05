@@ -18,6 +18,7 @@ export interface MovieResult {
   video: boolean;
   vote_average: number;
   vote_count: number;
+  movieAdded?: boolean;
 }
 
 export interface TVResult extends MovieResult{}
@@ -30,7 +31,7 @@ export interface SearchResponse {
 }
 
 export class SearchAPI extends BaseEntityAPI {
-  async generic<Result extends {adult: boolean}, Response>(type: 'tv' | 'movie', query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<Response>) => {}, language = 'en-US', page = 1) {
+  async generic<Result extends {adult: boolean}, Response>(type: 'tv' | 'movie', query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<Response>) => Promise.resolve(), language = 'en-US', page = 1) {
     let results: Result[] = []
     let currentPage = page
     let resp = await this._get<Response, any>(`search/${type}`, {
@@ -41,7 +42,7 @@ export class SearchAPI extends BaseEntityAPI {
     })
 
     results = resp.data.results.filter((result: Result) => result.adult)
-    iterationCallback({
+    await iterationCallback({
       ...resp,
       data: {
         ...resp.data,
@@ -57,7 +58,7 @@ export class SearchAPI extends BaseEntityAPI {
         page: ++currentPage
       })
       const iterationResults = resp.data.results.filter((result: Result) => result.adult)
-      iterationCallback({
+      await iterationCallback({
         ...resp,
         data: {
           ...resp.data,
@@ -75,10 +76,10 @@ export class SearchAPI extends BaseEntityAPI {
       }
     }
   }
-  async tv(query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => {}, language = 'en-US', page = 1) {
+  async tv(query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => Promise.resolve(), language = 'en-US', page = 1) {
     return await this.generic<TVResult, SearchResponse>('tv', query, include_adult, iterationCallback, language, page)
   }
-  async movie(query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => {}, language = 'en-US', page = 1) {
+  async movie(query: string, include_adult = false, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => Promise.resolve(), language = 'en-US', page = 1) {
     return await this.generic<MovieResult, SearchResponse>('movie', query, include_adult, iterationCallback, language, page)
   }
 }

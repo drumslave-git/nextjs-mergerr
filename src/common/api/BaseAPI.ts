@@ -36,7 +36,7 @@ export class BaseAPI<Config extends BaseConfig> {
     }
   }
 
-  async tmdbSearch(query: string, iterationCallback: (iteration: AxiosResponse<SearchResponse>) => void = () => {}) {
+  async tmdbSearch(query: string, iterationCallback = (iteration: AxiosResponse<SearchResponse>) => Promise.resolve()) {
     if (!this._tmdbApi) {
       return {
         data: {},

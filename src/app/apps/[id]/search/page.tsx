@@ -34,7 +34,7 @@ import Stack from '@mui/material/Stack'
 import {App} from "@prisma/client"
 import Link from "next/link"
 import {useSearchParams} from "next/navigation"
-import { ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState, use } from "react";
+import { ReactNode, memo, use, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {alpha } from "@mui/material/styles"
 
 const SearchIconButton = styled(IconButton)(() => ({
@@ -316,17 +316,9 @@ const Details = ({id, appId, onClose}: { id: number, appId: string, onClose: (tm
 }
 
 const AdditionalInfo = ({item, results, appId}: { item: Item, results: MovieResult[], appId: string }) => {
-  const [addedMovie, setAddedMovie] = useState(false)
-
   const result = useMemo(() => {
     return results.find(r => r.id === Number(item.id)) as MovieResult
   }, [item.id, results])
-
-  useEffect(() => {
-    fetch(`/api/app/${appId}/movie?tmdbId=${item.id}`).then(res => res.json()).then(data => {
-      setAddedMovie(data.length > 0)
-    })
-  }, [appId, item.id])
 
   if (!result) {
     return null
@@ -335,7 +327,7 @@ const AdditionalInfo = ({item, results, appId}: { item: Item, results: MovieResu
   return (
     <Stack direction="row" spacing={2} justifyContent="space-between" paddingTop={2}>
       <Rating value={result.vote_average} />
-      <CheckCircle fontSize="large" sx={{width: '40px', height: '40px'}} color={addedMovie ? 'success' : 'error'} />
+      <CheckCircle fontSize="large" sx={{width: '40px', height: '40px'}} color={result.movieAdded ? 'success' : 'error'} />
     </Stack>
   )
 }
@@ -354,7 +346,7 @@ const SearchResults = (props: { results: MovieResult[], items: Item[], appId: st
 }
 
 export default function SearchPage(props: { params: Promise<{ id: string }> }) {
-  const params = use(props.params);
+  const params = use(props.params)
   const searchParams = useSearchParams()
 
   const [results, setResults] = useState<MovieResult[] | undefined>(undefined)
@@ -363,11 +355,13 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
   const [searching, setSearching] = useState(false)
   const [detailsForID, setDetailsForID] = useState<number | null>(null)
   const [hideAdded, setHideAdded] = useState(false)
-  const [hideJAV, setHideJAV] = useState(false)
+  const [hideJavanese, setHideJavanese] = useState(false)
+  const [hideNoPoster, setHideNoPoster] = useState(false)
+  const [hideNoRating, setHideNoRating] = useState(false)
 
   const {ok, configuration, formatImagePath} = useTMDBApi()
 
-  const eventSource = useRef<EventSource>(undefined)
+  const eventSource = useRef<EventSource | undefined>(undefined)
 
   useEffect(() => {
     if (ok) {
@@ -384,7 +378,24 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
       setItems([])
       return
     }
-    setItems(results.map((result: MovieResult) => {
+    let filteredResults = results
+    const filters: ((result: MovieResult) => boolean)[] = []
+    if(hideJavanese) {
+      filters.push((result: MovieResult) => result.original_language !== 'ja')
+    }
+    if(hideAdded) {
+      filters.push((result: MovieResult) => !result.movieAdded)
+    }
+    if(hideNoPoster) {
+      filters.push((result: MovieResult) => !!result.poster_path)
+    }
+    if(hideNoRating) {
+      filters.push((result: MovieResult) => !!result.vote_average)
+    }
+    if(filters.length) {
+      filteredResults = results.filter(result => filters.every(filter => filter(result)))
+    }
+    setItems(filteredResults.map((result: MovieResult) => {
       const releaseYear = getReleaseYear(result.release_date)
       return {
         id: result.id,
@@ -392,7 +403,7 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
         image: result.poster_path ? formatImagePath(result.poster_path, configuration?.images.poster_sizes.at(1) || '') : undefined
       }
     }))
-  }, [configuration?.images.poster_sizes, formatImagePath, results])
+  }, [configuration?.images.poster_sizes, formatImagePath, results, hideAdded, hideJavanese, hideNoPoster, hideNoRating])
 
   const search = useCallback((e: any) => {
     if (e.preventDefault) {
@@ -437,7 +448,20 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
     }
   }, [search, searchParams])
 
-  const onDetailsClose = useCallback(() => {
+  const onDetailsClose = useCallback((tmdbId?: number) => {
+    if (tmdbId) {
+      setResults(prevState => {
+        if (!prevState) {
+          return prevState
+        }
+        return prevState.map(result => {
+          if (result.id === tmdbId) {
+            return {...result, movieAdded: true}
+          }
+          return result
+        })
+      })
+    }
     setDetailsForID(null)
   }, [])
 
@@ -445,8 +469,16 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
     setHideAdded(e.target.checked)
   }, [])
 
-  const onHideJAVChange = useCallback((e: any) => {
-    setHideJAV(e.target.checked)
+  const onHideJavaneseChange = useCallback((e: any) => {
+    setHideJavanese(e.target.checked)
+  }, [])
+
+  const onHideNoPosterChange = useCallback((e: any) => {
+    setHideNoPoster(e.target.checked)
+  }, [])
+
+  const onHideNoRatingChange = useCallback((e: any) => {
+    setHideNoRating(e.target.checked)
   }, [])
 
   if (!ok || !genres) {
@@ -469,7 +501,9 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
             </Stack>
             <Stack direction="row" spacing={2}>
               <FormControlLabel control={<Switch value={hideAdded} onChange={onHideAddedChange} />} label="Hide Added" />
-              <FormControlLabel control={<Switch value={hideJAV} onChange={onHideJAVChange} />} label="Hide JAV" />
+              <FormControlLabel control={<Switch value={hideJavanese} onChange={onHideJavaneseChange} />} label="Hide Javanese" />
+              <FormControlLabel control={<Switch value={hideNoPoster} onChange={onHideNoPosterChange} />} label="Hide No Poster" />
+              <FormControlLabel control={<Switch value={hideNoRating} onChange={onHideNoRatingChange} />} label="Hide No Rating" />
             </Stack>
           </CardContent>
         </form>

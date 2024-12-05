@@ -5,7 +5,15 @@ async function getHandler(req: NextRequestWithApi, {params}: {params: {id: strin
 
   const readableStream = new ReadableStream({
     async start(controller) {
-      await req.api.tmdbSearch(params.q, (resp) => {
+      const {q} = await params
+      await req.api.tmdbSearch(q, async (resp) => {
+        resp.data.results = await Promise.all(resp.data.results.map(async (result) => {
+          const movie = await req.api.movie.get(undefined, result.id)
+          return {
+            ...result,
+            movieAdded: movie?.data?.at(0) !== undefined
+          }
+        }))
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(resp.data)}\n\n`))
       })
       controller.close()

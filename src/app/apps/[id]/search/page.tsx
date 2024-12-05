@@ -14,6 +14,7 @@ import Rating from "@/components/common/TMDB/Rating"
 import {useNotifications} from "@/components/NotificationsProvider"
 import {useTMDBApi} from "@/components/TMDBApiProvider"
 import CheckCircle from "@mui/icons-material/CheckCircle"
+import {FormControlLabel, Switch} from "@mui/material"
 import LinearProgress from "@mui/material/LinearProgress"
 import Select from "@mui/material/Select"
 import MenuItem from "@mui/material/MenuItem"
@@ -33,7 +34,7 @@ import Stack from '@mui/material/Stack'
 import {App} from "@prisma/client"
 import Link from "next/link"
 import {useSearchParams} from "next/navigation"
-import {ReactNode, useCallback, useEffect, useMemo, useRef, useState} from "react"
+import { ReactNode, memo, useCallback, useEffect, useMemo, useRef, useState, use } from "react";
 import {alpha } from "@mui/material/styles"
 
 const SearchIconButton = styled(IconButton)(() => ({
@@ -352,7 +353,8 @@ const SearchResults = (props: { results: MovieResult[], items: Item[], appId: st
   )
 }
 
-export default function SearchPage({params}: { params: { id: string } }) {
+export default function SearchPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const searchParams = useSearchParams()
 
   const [results, setResults] = useState<MovieResult[] | undefined>(undefined)
@@ -360,10 +362,12 @@ export default function SearchPage({params}: { params: { id: string } }) {
   const [genres, setGenres] = useState<Genre[] | null>(null)
   const [searching, setSearching] = useState(false)
   const [detailsForID, setDetailsForID] = useState<number | null>(null)
+  const [hideAdded, setHideAdded] = useState(false)
+  const [hideJAV, setHideJAV] = useState(false)
 
   const {ok, configuration, formatImagePath} = useTMDBApi()
 
-  const eventSource = useRef<EventSource>()
+  const eventSource = useRef<EventSource>(undefined)
 
   useEffect(() => {
     if (ok) {
@@ -437,6 +441,14 @@ export default function SearchPage({params}: { params: { id: string } }) {
     setDetailsForID(null)
   }, [])
 
+  const onHideAddedChange = useCallback((e: any) => {
+    setHideAdded(e.target.checked)
+  }, [])
+
+  const onHideJAVChange = useCallback((e: any) => {
+    setHideJAV(e.target.checked)
+  }, [])
+
   if (!ok || !genres) {
     return (
       <div>Loading...</div>
@@ -454,6 +466,10 @@ export default function SearchPage({params}: { params: { id: string } }) {
               <SearchIconButton type="submit">
                 <SearchIcon />
               </SearchIconButton>
+            </Stack>
+            <Stack direction="row" spacing={2}>
+              <FormControlLabel control={<Switch value={hideAdded} onChange={onHideAddedChange} />} label="Hide Added" />
+              <FormControlLabel control={<Switch value={hideJAV} onChange={onHideJAVChange} />} label="Hide JAV" />
             </Stack>
           </CardContent>
         </form>

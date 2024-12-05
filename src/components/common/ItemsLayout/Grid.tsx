@@ -25,8 +25,8 @@ export const GridCell = styled(Paper)(({ theme }) => ({
 
 export interface ItemComponentProps {
   item: Item;
-  AdditionalContentComponent?: (props: {item: Item} & Record<string, any>) => ReactElement;
-  ActionComponent: (props: {item: Item, children: ReactNode} & Record<string, any>) => ReactElement;
+  AdditionalContentComponent?: (props: {item: Item} & Record<string, any>) => ReactElement<any>;
+  ActionComponent: (props: {item: Item, children: ReactNode} & Record<string, any>) => ReactElement<any>;
 }
 
 export function ItemComponent({item, AdditionalContentComponent, ActionComponent}: ItemComponentProps) {
@@ -43,8 +43,8 @@ export function ItemComponent({item, AdditionalContentComponent, ActionComponent
 
 export interface GridComponentProps {
   items: Item[];
-  AdditionalContentComponent?: (props: {item: Item} & Record<string, any>) => ReactElement;
-  ActionComponent?: (props: {item: Item, children: ReactNode} & Record<string, any>) => ReactElement;
+  AdditionalContentComponent?: (props: {item: Item} & Record<string, any>) => ReactElement<any>;
+  ActionComponent?: (props: {item: Item, children: ReactNode} & Record<string, any>) => ReactElement<any>;
   aspectRatio?: number
 }
 

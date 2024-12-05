@@ -2,9 +2,10 @@
 
 import {Movie} from "@/common/api/Radarr/entities/MovieAPI"
 import MovieCard from "@/components/common/MovieCard"
-import {useEffect, useState} from "react"
+import { useEffect, useState, use } from "react";
 
-export default function QueueEntryPage({ params }: { params: { id: string, movieId: string } }) {
+export default function QueueEntryPage(props: { params: Promise<{ id: string, movieId: string }> }) {
+  const params = use(props.params);
   const [record, setRecord] = useState<Movie | null>(null)
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import {prisma} from '@/lib/prisma'
 
-export async function GET(req: Request, { params }: { params: { id: string, mergeId: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string, mergeId: string }> }) {
+  const params = await props.params;
   const merge = await prisma.merge.findUnique({
     where: {
       app_id: params.id,
@@ -18,7 +19,8 @@ export async function GET(req: Request, { params }: { params: { id: string, merg
   return Response.json(merge)
 }
 
-export async function DELETE(req: Request, { params }: { params: {id: string, mergeId: string} }) {
+export async function DELETE(req: Request, props: { params: Promise<{id: string, mergeId: string}> }) {
+  const params = await props.params;
   const result = await prisma.merge.delete({
     where: {
       id: params.mergeId,

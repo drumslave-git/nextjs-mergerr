@@ -9,7 +9,8 @@ export default function withApi(
   handler: (req: NextRequestWithApi, { params }: { params: { id: string } & any } & any) => any | Promise<any>
 ) {
   return async (req: NextRequestWithApi, { params, ...rest }: { params: { id: string } & any } & any) => {
-    await appIdMiddleware(req, params.id)
+    const { id } = await params
+    await appIdMiddleware(req, id)
     return handler(req, {params, ...rest})
   }
 }

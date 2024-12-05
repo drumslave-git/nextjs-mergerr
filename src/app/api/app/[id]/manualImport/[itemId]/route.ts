@@ -23,7 +23,8 @@ async function getHandler(req: NextRequestWithApi, {params}: { params: { id: str
   return Response.json(resp.data)
 }
 
-export async function POST(req: Request, {params}: { params: { id: string, itemId: string } }) {
+export async function POST(req: Request, props: { params: Promise<{ id: string, itemId: string }> }) {
+  const params = await props.params;
   const app = await prisma.app.findUnique({
     where: {
       id: params.id,
@@ -35,7 +36,7 @@ export async function POST(req: Request, {params}: { params: { id: string, itemI
   }
 
   const data = {
-    ...await req.json(),
+    ...(await req.json()),
     movieId: params.itemId,
     importMode: 'auto',
     name: 'ManualImport'

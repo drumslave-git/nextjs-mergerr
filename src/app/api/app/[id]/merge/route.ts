@@ -9,7 +9,8 @@ const debug = (...args: any[]) => {
   console.log(...args)
 }
 
-export async function POST(req: Request, {params}: { params: { id: string } }) {
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const data = await req.json()
   const output = path.join(data.output.path, data.output.name + '.mkv')
   if (fs.existsSync(data.output.path)) {
@@ -107,7 +108,8 @@ export async function POST(req: Request, {params}: { params: { id: string } }) {
   return Response.json(merge)
 }
 
-export async function GET(req: Request, {params}: { params: { id: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const merge = await prisma.merge.findMany({
     where: {
       app_id: params.id

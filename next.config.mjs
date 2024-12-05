@@ -26,6 +26,9 @@ const nextConfig = {
         }
         return config
     },
+    experimental: {
+        reactCompiler: true,
+    }
 }
 
 export default withBundleAnalyzer(nextConfig)

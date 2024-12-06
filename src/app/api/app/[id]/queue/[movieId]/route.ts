@@ -3,13 +3,15 @@ import formatOutputFilePath from "@/lib/formatOutputFilePath"
 import withApi, {NextRequestWithApi} from "@/lib/withApi"
 
 async function deleteHandler(req: NextRequestWithApi, { params }: { params: { id: string, itemId: string } }) {
-  const resp = await req.api.queue.delete(Number(params.itemId))
+  const {itemId} = await params
+  const resp = await req.api.queue.delete(Number(itemId))
 
   return Response.json(resp.data, {status: resp.status})
 }
 
 async function getHandler(req: NextRequestWithApi, { params }: { params: { id: string, movieId: string } }) {
-  const resp = await req.api.queue.details(params.movieId)
+  const {movieId} = await params
+  const resp = await req.api.queue.details(movieId)
 
   return Response.json(resp.data.map((record: QueueEntry) => ({
     ...record,

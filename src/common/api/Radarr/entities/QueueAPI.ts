@@ -6,6 +6,7 @@ import {AxiosResponse} from "axios"
 export interface QueueEntry {
   id: number;
   movieId: number;
+  tmdbId: number;
   title: string;
   size: number;
   sizeleft: number;
@@ -71,8 +72,8 @@ export class QueueAPI extends BaseEntityAPI {
   }
 
   // Method to get a specific queue item by ID
-  async details(movieId: string | number) {
-    return await this._get<QueueEntry[], any>('queue/details', {movieId})
+  async details(movieId: string | number, {includeMovie = false}: {includeMovie?: boolean} = {}) {
+    return await this._get<QueueEntry[], any>('queue/details', {movieId, includeMovie})
   }
 
   // Method to delete a specific queue item by ID

@@ -1,6 +1,7 @@
 import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"
 import formatOutputFilePath from "@/lib/formatOutputFilePath"
 import withApi, {NextRequestWithApi} from "@/lib/withApi"
+import {NextResponse} from "next/server"
 
 async function deleteHandler(req: NextRequestWithApi, { params }: { params: { id: string, itemId: string } }) {
   const {itemId} = await params
@@ -11,7 +12,8 @@ async function deleteHandler(req: NextRequestWithApi, { params }: { params: { id
 
 async function getHandler(req: NextRequestWithApi, { params }: { params: { id: string, movieId: string } }) {
   const {movieId} = await params
-  const resp = await req.api.queue.details(movieId)
+  const includeMovie = req.nextUrl.searchParams.get('includeMovie') === 'true'
+  const resp = await req.api.queue.details(movieId, {includeMovie})
 
   return Response.json(resp.data.map((record: QueueEntry) => ({
     ...record,

@@ -49,12 +49,12 @@ export interface ImportDecision {
 
 export class ManualImportAPI extends BaseEntityAPI {
   // Method to fetch manual import items
-  async fetchManualImportItems(options: ManualImportOptions) {
+  async get(options: ManualImportOptions) {
     return await this._get<ManualImportItem[], any>('manualimport', options)
   }
 
   // Method to import manual decisions
-  async importManualDecisions(decisions: ImportDecision[]) {
+  async post(decisions: ImportDecision[]) {
     await this._post<void, void>("manualimport/import", decisions)
   }
 }

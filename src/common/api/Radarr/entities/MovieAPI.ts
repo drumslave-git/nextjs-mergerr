@@ -4,6 +4,7 @@ import {MovieLookupResult} from "@/common/api/Radarr/entities/MovieLookupAPI"
 // Define types for movie-related data
 export interface Movie {
   title: string;
+  cleanTitle: string;
   year: number;
   tmdbId: number;
   imdbId?: string;
@@ -11,6 +12,7 @@ export interface Movie {
   qualityProfileId: number;
   rootFolderPath: string;
   monitored: boolean;
+  overview: string;
   addOptions?: {
     searchForMovie: boolean;
   };
@@ -18,6 +20,7 @@ export interface Movie {
     coverType: string;
     remoteUrl: string;
   }[];
+  path: string
 }
 
 export interface MovieResponse extends Movie {

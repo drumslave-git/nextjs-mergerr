@@ -1,14 +1,14 @@
 'use client'
 
-import {MovieAddSetting, MovieResponse} from "@/common/api/Radarr/entities/MovieAPI"
+import {MovieAddSetting} from "@/common/api/Radarr/entities/MovieAPI"
 import {QualityProfile} from "@/common/api/Radarr/entities/QualityProfileAPI"
 import {RootFolder} from "@/common/api/Radarr/entities/RootFolderAPI"
 import {Genre} from "@/common/api/TMDB/entities/GenresAPI"
 import {MovieResult} from "@/common/api/TMDB/entities/SearchAPI"
-import CircularProgressWithLabel from "@/components/common/CircularProgressWithLabel"
 import InfinitProgressOverlay from "@/components/common/InfinitProgressOverlay"
 import Grid, {Item} from "@/components/common/ItemsLayout/Grid"
 import ModalPopup from "@/components/common/ModalPopup"
+import MovieCard from "@/components/common/MovieCard"
 import {TMDBImage} from "@/components/common/TMDB/Image"
 import Rating from "@/components/common/TMDB/Rating"
 import {useNotifications} from "@/components/NotificationsProvider"
@@ -34,7 +34,7 @@ import Stack from '@mui/material/Stack'
 import {App} from "@prisma/client"
 import Link from "next/link"
 import {useSearchParams} from "next/navigation"
-import { ReactNode, memo, use, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ReactNode, use, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {alpha } from "@mui/material/styles"
 
 const SearchIconButton = styled(IconButton)(() => ({
@@ -42,13 +42,6 @@ const SearchIconButton = styled(IconButton)(() => ({
   height: '100%',
   alignSelf: 'center',
 }))
-
-const getReleaseYear = (releaseDate?: string) => {
-  if (!releaseDate) {
-    return ''
-  }
-  return new Date(releaseDate).getFullYear()
-}
 
 const ActionComponent = ({item, children, onClick}: { item: Item, children: ReactNode, onClick: (id: number) => void }) => {
   const onClickHandler = useCallback(() => {
@@ -67,6 +60,7 @@ const SemiTransparentCard = styled(Card)(({ theme }) => ({
 
 const Details = ({id, appId, onClose}: { id: number, appId: string, onClose: (tmdbId?: number) => void }) => {
   const {addNotification} = useNotifications()
+  const {formatReleaseYear} = useTMDBApi()
 
   const [details, setDetails] = useState<MovieResult | null>(null)
   const [addingMovie, setAddingMovie] = useState(false)
@@ -93,8 +87,8 @@ const Details = ({id, appId, onClose}: { id: number, appId: string, onClose: (tm
     if(!details) {
       return ''
     }
-    return getReleaseYear(details.release_date)
-  }, [details])
+    return formatReleaseYear(details.release_date)
+  }, [details, formatReleaseYear])
 
   useEffect(() => {
     fetch(`/api/app/${appId}`).then(res => res.json()).then(data => {
@@ -213,109 +207,84 @@ const Details = ({id, appId, onClose}: { id: number, appId: string, onClose: (tm
     }
   }, [addingMovie, onClose])
 
+  if (!details) {
+    return <ModalPopup onClose={onCloseHandler}>
+      <InfinitProgressOverlay />
+    </ModalPopup>
+  }
+
   return (
     <ModalPopup onClose={onCloseHandler}>
-      {details && addedMovie !== undefined ? (
-        <Grid2 container spacing={2} padding={2}>
-          {addingMovie && <InfinitProgressOverlay zIndex={3} />}
-          <Grid2 size={{xs: 12, sm: 5, md: 4}}>
-            <TMDBImage item={details} type="poster" size={-1} />
-          </Grid2>
-          <Grid2 size={{xs: 12, sm: 7, md: 8}} sx={{position: 'relative'}}>
-            <TMDBImage item={details} type="backdrop" size={-1} sx={{position: 'absolute', maxHeight: '50%', zIndex: 1, opacity: .5}} />
-            <Stack direction="column" spacing={2} sx={{zIndex: 2, position: 'relative'}}>
-              <SemiTransparentCard raised>
-                <CardContent>
-                  <Typography variant="h6">{`${details.title}${releaseYear ? ` (${releaseYear})` : ''}`}</Typography>
-                </CardContent>
-              </SemiTransparentCard>
-              <SemiTransparentCard raised>
-                <CardContent>
-                  <Link href={`https://www.themoviedb.org/movie/${id}`} target="_blank">
-                    <Chip label="TMDB" />
-                  </Link>
-                </CardContent>
-              </SemiTransparentCard>
-              {details.overview && (
-                <SemiTransparentCard raised>
-                  <CardContent>
-                    <Typography>{details.overview}</Typography>
-                  </CardContent>
-                </SemiTransparentCard>
-              )}
-              {!addedMovie && (
-                <SemiTransparentCard raised>
-                  <CardContent>
-                    <Stack direction="column" spacing={2} paddingTop={2}>
-                      {rootFolders.length > 0 && (
-                        <FormControl fullWidth>
-                          <InputLabel>Root Folder</InputLabel>
-                          <Select
-                            value={newMovie.options.rootFolderPath}
-                            label="Root Folder"
-                            onChange={e => changeNewMovieOption('rootFolderPath', e.target.value)}
-                          >
-                            {rootFolders.map(folder => (
-                              <MenuItem key={folder.id} value={folder.path}>{folder.path}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
-                      {qualityProfiles.length > 0 && (
-                        <FormControl fullWidth>
-                          <InputLabel>Quality Profile</InputLabel>
-                          <Select
-                            value={newMovie.options.qualityProfileId}
-                            label="Root Folder"
-                            onChange={e => changeNewMovieOption('qualityProfileId', e.target.value)}
-                          >
-                            {qualityProfiles.map(qualityProfile => (
-                              <MenuItem key={qualityProfile.id} value={qualityProfile.id}>{qualityProfile.name}</MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
-                      <FormControl fullWidth>
-                        <InputLabel>Monitor</InputLabel>
-                        <Select
-                          value={newMovie.options.addOptions.monitor}
-                          label="Monitor"
-                          onChange={e => changeNewMovieOption('addOptions.monitor', e.target.value)}
-                        >
-                          <MenuItem value="movieOnly">Movie</MenuItem>
-                          <MenuItem value="movieAndCollection">Movie and Collection</MenuItem>
-                          <MenuItem value="none">None</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Stack>
-                  </CardContent>
-                </SemiTransparentCard>
-              )}
-            </Stack>
-          </Grid2>
-          {app && (
-            <Stack justifyContent="center" direction="row" width="100%">
-              {addedMovie
-                ? (
-                  <Link href={`${app.public_url || app.url}/movie/${id}`} target="_blank" passHref>
-                    <Button variant="contained" color="success">View in {app.name}</Button>
-                  </Link>
-                )
-                : (
-                  <Button variant="contained" onClick={addMovie} color="primary">Add to {app.name}</Button>
-                )
-              }
-            </Stack>
-          )}
-        </Grid2>
-      ) : (
-        <LinearProgress />
-      )}
+      <MovieCard movie={details} actions={
+        app ? (
+          <>
+            {addedMovie
+              ? (
+                <Link href={`${app.public_url || app.url}/movie/${id}`} target="_blank" passHref>
+                  <Button variant="contained" color="success">View in {app.name}</Button>
+                </Link>
+              )
+              : (
+                <Button variant="contained" onClick={addMovie} color="primary">Add to {app.name}</Button>
+              )
+            }
+          </>
+        ) : null
+      }>
+        {!addedMovie && (
+          <SemiTransparentCard raised>
+            <CardContent>
+              <Stack direction="column" spacing={2} paddingTop={2}>
+                {rootFolders.length > 0 && (
+                  <FormControl fullWidth>
+                    <InputLabel>Root Folder</InputLabel>
+                    <Select
+                      value={newMovie.options.rootFolderPath}
+                      label="Root Folder"
+                      onChange={e => changeNewMovieOption('rootFolderPath', e.target.value)}
+                    >
+                      {rootFolders.map(folder => (
+                        <MenuItem key={folder.id} value={folder.path}>{folder.path}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+                {qualityProfiles.length > 0 && (
+                  <FormControl fullWidth>
+                    <InputLabel>Quality Profile</InputLabel>
+                    <Select
+                      value={newMovie.options.qualityProfileId}
+                      label="Root Folder"
+                      onChange={e => changeNewMovieOption('qualityProfileId', e.target.value)}
+                    >
+                      {qualityProfiles.map(qualityProfile => (
+                        <MenuItem key={qualityProfile.id} value={qualityProfile.id}>{qualityProfile.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+                <FormControl fullWidth>
+                  <InputLabel>Monitor</InputLabel>
+                  <Select
+                    value={newMovie.options.addOptions.monitor}
+                    label="Monitor"
+                    onChange={e => changeNewMovieOption('addOptions.monitor', e.target.value)}
+                  >
+                    <MenuItem value="movieOnly">Movie</MenuItem>
+                    <MenuItem value="movieAndCollection">Movie and Collection</MenuItem>
+                    <MenuItem value="none">None</MenuItem>
+                  </Select>
+                </FormControl>
+              </Stack>
+            </CardContent>
+          </SemiTransparentCard>
+        )}
+      </MovieCard>
     </ModalPopup>
   )
 }
 
-const AdditionalInfo = ({item, results, appId}: { item: Item, results: MovieResult[], appId: string }) => {
+const AdditionalInfo = ({item, results}: { item: Item, results: MovieResult[] }) => {
   const result = useMemo(() => {
     return results.find(r => r.id === Number(item.id)) as MovieResult
   }, [item.id, results])
@@ -340,7 +309,7 @@ const SearchResults = (props: { results: MovieResult[], items: Item[], appId: st
       items={items}
       aspectRatio={.5}
       ActionComponent={({item, children}) => <ActionComponent item={item} onClick={onClick}>{children}</ActionComponent>}
-      AdditionalContentComponent={({item}) => <AdditionalInfo item={item} results={results} appId={appId} />}
+      AdditionalContentComponent={({item}) => <AdditionalInfo item={item} results={results} />}
     />
   )
 }
@@ -348,6 +317,7 @@ const SearchResults = (props: { results: MovieResult[], items: Item[], appId: st
 export default function SearchPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params)
   const searchParams = useSearchParams()
+  const {formatReleaseYear} = useTMDBApi()
 
   const [results, setResults] = useState<MovieResult[] | undefined>(undefined)
   const [items, setItems] = useState<Item[]>([])
@@ -396,11 +366,11 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
       filteredResults = results.filter(result => filters.every(filter => filter(result)))
     }
     setItems(filteredResults.map((result: MovieResult) => {
-      const releaseYear = getReleaseYear(result.release_date)
+      const releaseYear = formatReleaseYear(result.release_date)
       return {
         id: result.id,
         title: `${result.title}${releaseYear ? ` (${releaseYear})` : ''}`,
-        image: result.poster_path ? formatImagePath(result.poster_path, configuration?.images.poster_sizes.at(1) || '') : undefined
+        image: result.poster_path ? formatImagePath(result.poster_path, 'poster', 1) : undefined
       }
     }))
   }, [configuration?.images.poster_sizes, formatImagePath, results, hideAdded, hideJavanese, hideNoPoster, hideNoRating])

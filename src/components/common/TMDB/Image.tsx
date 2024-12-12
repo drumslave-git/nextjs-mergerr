@@ -32,5 +32,5 @@ export const TMDBImage = ({item, type, size, sx}: TMDBImageProps) => {
     return null
   }
 
-  return <Img src={formatImagePath(path, configuration.images[`${type}_sizes`].at(size) || '')} alt={item.title} sx={sx} />
+  return <Img src={formatImagePath(path, type, size)} alt={item.title} sx={sx} />
 }

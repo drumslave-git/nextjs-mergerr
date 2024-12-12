@@ -1,127 +1,51 @@
-import {MergeStatus} from "@/consts"
-import ffmpeg from 'fluent-ffmpeg'
-import fs from 'fs'
-import path from 'path'
-import {prisma} from '@/lib/prisma'
+import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"
+import withApi, {NextRequestWithApi} from "@/lib/withApi"
+import withMergerrApi, {NextRequestWithMergerrApi} from "@/lib/withMergerrApi"
 
-const debug = (...args: any[]) => {
-  if (process.env.NODE_ENV !== 'development') return
-  console.log(...args)
-}
-
-export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const data = await req.json()
-  const output = path.join(data.output.path, data.output.name + '.mkv')
-  if (fs.existsSync(data.output.path)) {
-    fs.rmSync(data.output.path, {recursive: true})
+const postHandler = async (req: NextRequestWithMergerrApi & NextRequestWithApi) => {
+  const {queueId, movieId} = await req.json()
+  const queueDetailsResp = await req.api.queue.details(movieId, {includeMovie: true})
+  const queueDetails = await queueDetailsResp.data as QueueEntry[]
+  const queue = queueDetails.find(q => q.id === parseInt(queueId))
+  if (!queue) {
+    return Response.json({message: `queue not found for movie id: ${movieId} and queue id: ${queueId}`}, {status: 404})
   }
-  fs.mkdirSync(data.output.path, {recursive: true})
-  let merge = await prisma.merge.findUnique({
-    where: {
-      output
-    },
-    include: {
-      inputs: true
-    }
-  })
-  if (!merge) {
-    merge = await prisma.merge.create({
-      data: {
-        progress: 0,
-        status: MergeStatus.created,
-        inputs: {
-          create: data.inputs.map(({path, name}: { path: string, name: string }) => ({
-            path,
-            name,
-          }))
-        },
-        output,
-        app: {
-          connect: {
-            id: params.id
-          }
-        }
-      },
-      include: {
-        inputs: true
-      }
-    })
+  if (!queue.movie) {
+    return Response.json({message: 'queue does not have a movie'}, {status: 400})
   }
 
-  if (merge.status !== MergeStatus.created) {
-    return Response.json(merge)
-  }
-
-  await prisma.merge.update({
-    where: {
-      id: merge.id
-    },
-    data: {
-      status: MergeStatus.running,
-    }
+  const manualImportResp = await req.api.manualImport.get({
+    downloadId: queue.downloadId
   })
 
-  let ffmpegCommand = ffmpeg()
-  for (const input of data.inputs) {
-    ffmpegCommand = ffmpegCommand.input(input.path)
+  if (manualImportResp.status !== 200) {
+    return Response.json({message: 'manual import failed'}, {status: manualImportResp.status})
   }
-  ffmpegCommand
-    .on('end', async function () {
-      debug('ffmpeg end')
-      await prisma.merge.update({
-        where: {
-          id: merge.id
-        },
-        data: {
-          status: MergeStatus.done,
-          result: 'merged successfully',
-          progress: 100
-        }
-      })
-    })
-    .on('error', async function (err) {
-      await prisma.merge.update({
-        where: {
-          id: merge.id
-        },
-        data: {
-          status: MergeStatus.failed,
-          error: err.message,
-        }
-      }).then(debug.bind(console))
-    })
-    .on('progress', async function (progress) {
-      const inputsCount = merge.inputs.length
-      debug('ffmpeg progress', (progress.percent || 0) / inputsCount)
-      await prisma.merge.update({
-        where: {
-          id: merge.id
-        },
-        data: {
-          progress: (progress.percent || 0) / inputsCount
-        }
-      })
-    })
-  // @ts-ignore
-  ffmpegCommand.mergeToFile(output)
+
+  const merge = await req.mergerrAPI.create({
+    movieId: queue.movieId,
+    tmdbId: queue.movie.tmdbId,
+    queueId: queue.id,
+    inputs: manualImportResp.data.map(({path, name}: {path: string, name: string}) => ({
+      path,
+      name
+    }))
+  })
+
   return Response.json(merge)
 }
 
-export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const merge = await prisma.merge.findMany({
-    where: {
-      app_id: params.id
-    },
-    include: {
-      inputs: true
-    }
-  })
-
-  if (!merge) {
-    return Response.json([])
+async function getHandler(req: NextRequestWithMergerrApi) {
+  const queueId = await req.nextUrl.searchParams.get('queueId')
+  let resp
+  if (!queueId) {
+    resp = await req.mergerrAPI.get()
+  } else {
+    resp = await req.mergerrAPI.find({queueId: parseInt(queueId)})
   }
 
-  return Response.json(merge)
+  return Response.json(resp)
 }
+
+export const POST = withApi(withMergerrApi(postHandler))
+export const GET = withMergerrApi(getHandler)

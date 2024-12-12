@@ -23,13 +23,14 @@ model App {
 model Merge {
   id       String  @id @default(cuid())
   inputs   Input[] @relation("MergeInputs")
-  progress Int
-  error    String?
-  result   String?
+  progress Int?    @default(0)
+  error    String? @default("")
+  result   String? @default("")
   status   String
   app      App     @relation(fields: [app_id], references: [id], name: "AppMerges", onDelete: Cascade)
   app_id   String
   movieId  String  @unique
+  queueId  Int     @unique
   tmdbId   Int     @unique
 }
 

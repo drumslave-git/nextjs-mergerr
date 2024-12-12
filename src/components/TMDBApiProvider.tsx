@@ -56,12 +56,20 @@ export default function FormDialog({open, isLoading, onSubmit, onCancel}: {open:
   )
 }
 
-type formatImagePathType = (path: string, size: string) => string
+type formatImagePathType = (path: string, type: 'poster' | 'backdrop', size: number) => string
 
-const TMDBApiContext = createContext<{ok: boolean | null, configuration: ConfigurationResponse | null, formatImagePath: formatImagePathType}>({
+const formatReleaseYear = (releaseDate?: string) => {
+  if (!releaseDate) {
+    return ''
+  }
+  return new Date(releaseDate).getFullYear().toString()
+}
+
+const TMDBApiContext = createContext<{ok: boolean | null, configuration: ConfigurationResponse | null, formatImagePath: formatImagePathType, formatReleaseYear: (releaseDate?: string) => string}>({
   ok: null,
   configuration: null,
-  formatImagePath: () => ''
+  formatImagePath: () => '',
+  formatReleaseYear
 })
 
 export function TMDBApiProvider({children}: { children: ReactNode }) {
@@ -74,38 +82,39 @@ export function TMDBApiProvider({children}: { children: ReactNode }) {
 
   const makeTest = useCallback(() => {
     fetch('/api/tmdb/test')
-      .then(res => res.json()).then(data => {
-      setIsLoading(false)
-      setShowConfigDialog(false)
-      if(!data.success) {
-        setOk(false)
-        addNotification({
-          title: 'TMDB Error',
-          type: 'error',
-          message: data.status_message
-        })
-        setShowConfigDialog(true)
-      } else {
-        fetch('/api/tmdb/configuration')
-          .then(res => res.json()).then(data => {
+      .then(res => {
+        setIsLoading(false)
+        setShowConfigDialog(false)
+        if(res.status !== 200) {
+          setOk(false)
+          addNotification({
+            title: 'TMDB Error',
+            type: 'error',
+            message: `${res.status} ${res.statusText}`
+          })
+          setShowConfigDialog(true)
+        } else {
+          fetch('/api/tmdb/configuration')
+            .then(res => res.json()).then(data => {
             setConfiguration(data)
             setOk(true)
-        })
-      }
-    })
+          })
+        }
+      })
   }, [addNotification])
 
   useEffect(() => {
     makeTest()
   }, [makeTest])
 
-  const formatImagePath = useCallback((path: string, size: string) => {
+  const formatImagePath = useCallback<formatImagePathType>((path, type, size) => {
     if(!configuration) {
       return ''
     }
     const baseUrlTField = location.protocol === 'https:' ? 'secure_base_url' : 'base_url'
+    const sizeStr = configuration.images[`${type}_sizes`].at(size) || ''
 
-    return `${configuration.images[baseUrlTField]}${size}${path}`
+    return `${configuration.images[baseUrlTField]}${sizeStr}${path}`
   }, [configuration])
 
   const onSubmit = useCallback((apiKey: string) => {
@@ -124,7 +133,7 @@ export function TMDBApiProvider({children}: { children: ReactNode }) {
   }, [makeTest])
 
   return (
-    <TMDBApiContext.Provider value={{ok, configuration, formatImagePath}}>
+    <TMDBApiContext.Provider value={{ok, configuration, formatImagePath, formatReleaseYear}}>
       {children}
       <FormDialog open={showConfigDialog} isLoading={isLoading} onCancel={() => setShowConfigDialog(false)} onSubmit={onSubmit}  />
     </TMDBApiContext.Provider>

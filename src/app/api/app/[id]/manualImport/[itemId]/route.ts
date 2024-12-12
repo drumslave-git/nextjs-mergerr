@@ -1,30 +1,18 @@
-import {ManualImportOptions} from "@/common/api/Radarr/entities/ManualImportAPI"
 import {ApiEndpoints, AppType} from "@/consts"
 import withApi, {NextRequestWithApi} from "@/lib/withApi"
 import qs from "qs"
 import {prisma} from "@/lib/prisma"
-import path from "path"
 
 async function getHandler(req: NextRequestWithApi, {params}: { params: { id: string, itemId: string } }) {
-  let output = req.nextUrl.searchParams.get('output')
-  if (output) {
-    output = output.split(path.sep).slice(0, -1).join(path.sep)
-  }
+  const {itemId} = await params
 
-  const reqParams: ManualImportOptions = {
-    [output ? 'movieId' : 'downloadId']: params.itemId,
-  }
-  if (output) {
-    reqParams.folder = output
-  }
-
-  const resp = await req.api.manualImport.fetchManualImportItems(reqParams)
+  const resp = await req.api.manualImport.get({downloadId: itemId})
   resp.data.sort((a: any, b: any) => a.path.localeCompare(b.path))
-  return Response.json(resp.data)
+  return Response.json(resp.data, {status: resp.status})
 }
 
 export async function POST(req: Request, props: { params: Promise<{ id: string, itemId: string }> }) {
-  const params = await props.params;
+  const params = await props.params
   const app = await prisma.app.findUnique({
     where: {
       id: params.id,

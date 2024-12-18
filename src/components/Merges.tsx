@@ -1,3 +1,4 @@
+//@ts-nocheck TODO this is deprecated
 'use client'
 
 import LinearProgressWithLabel from "@/components/LinearProgressWithLabel"

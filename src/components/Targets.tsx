@@ -1,3 +1,4 @@
+//@ts-nocheck TODO this is deprecated
 import ModalPopup from "@/components/common/ModalPopup"
 import CircularProgress from "@mui/material/CircularProgress"
 import List from "@mui/material/List"

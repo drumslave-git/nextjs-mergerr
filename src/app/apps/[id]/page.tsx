@@ -8,7 +8,7 @@ import Paper from "@mui/material/Paper"
 import Typography from "@mui/material/Typography"
 
 export default async function AppPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+  const params = await props.params
   const app = await prisma.app.findUnique({
     where: {
       id: params.id,
@@ -16,7 +16,7 @@ export default async function AppPage(props: { params: Promise<{ id: string }> }
   })
   if (!app) {
     return null
-  }
+  } 
 
   return <Paper>
     <Box sx={{p: 2}}>

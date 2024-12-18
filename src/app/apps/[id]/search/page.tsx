@@ -373,7 +373,7 @@ export default function SearchPage(props: { params: Promise<{ id: string }> }) {
         image: result.poster_path ? formatImagePath(result.poster_path, 'poster', 1) : undefined
       }
     }))
-  }, [configuration?.images.poster_sizes, formatImagePath, results, hideAdded, hideJavanese, hideNoPoster, hideNoRating])
+  }, [configuration, formatImagePath, results, hideAdded, hideJavanese, hideNoPoster, hideNoRating, formatReleaseYear])
 
   const search = useCallback((e: any) => {
     if (e.preventDefault) {

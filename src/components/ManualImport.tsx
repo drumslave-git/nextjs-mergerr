@@ -22,6 +22,7 @@ const ManualImport = ({app, onClose, item, onClickImport}: { app: App, onClose: 
       return
     }
     setLoading(true)
+    //@ts-ignore TODO this is deprecated
     fetch(`/api/app/${app.id}/manualImport/${item.movieId}?output=${merge.output}`).then(res => res.json())
       .then(data => {
         setFiles(data)
@@ -38,6 +39,7 @@ const ManualImport = ({app, onClose, item, onClickImport}: { app: App, onClose: 
   }, [target])
 
   return (
+    // @ts-ignore
     <ModalPopup title="Manual Import" onClose={onClose}>
       {loading && <CircularProgress />}
       <Table>

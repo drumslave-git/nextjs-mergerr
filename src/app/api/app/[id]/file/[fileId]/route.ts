@@ -9,12 +9,12 @@ export async function DELETE(
   req: NextRequest,
   props: { params: Promise<{ id: string, fileId: string }> }
 ) {
-  const params = await props.params;
+  const params = await props.params
   const app = await prisma.app.findUnique({
     where: {
       id: params.id,
     },
-  })
+  }) 
 
   if (!app) {
     return Response.json({message: 'App not found'}, {status: 404})

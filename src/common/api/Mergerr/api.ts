@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import {MergeStatus, PostData} from "@/common/api/Mergerr/types"
 import {RadarrAPI} from "@/common/api/Radarr/api"
 import {QueueEntry} from "@/common/api/Radarr/entities/QueueAPI"

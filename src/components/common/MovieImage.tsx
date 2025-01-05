@@ -1,5 +1,6 @@
 import {Movie} from "@/common/api/Radarr/entities/MovieAPI"
 import {MovieResult} from "@/common/api/TMDB/entities/SearchAPI"
+import {Data} from "@/common/api/TPDB/types"
 import {useTMDBApi} from "@/components/TMDBApiProvider"
 import {SxProps} from "@mui/material/styles"
 import styled from "@mui/material/styles/styled"
@@ -12,7 +13,7 @@ const Img = styled('img')(() => ({
   borderRadius: '4px',
 }))
 
-const BaseImage = ({movie, type, size, sx}: {movie: Movie | MovieResult, type: 'poster' | 'backdrop', size: number, sx?: SxProps}) => {
+const BaseTMDBImage = ({movie, type, size, sx}: {movie: Movie | MovieResult, type: 'poster' | 'backdrop', size: number, sx?: SxProps}) => {
   const {ok, configuration, formatImagePath} = useTMDBApi()
   const image = useMemo(() => {
     let result
@@ -39,13 +40,29 @@ const BaseImage = ({movie, type, size, sx}: {movie: Movie | MovieResult, type: '
     return null
   }
 
+  if(!image) {
+    return null
+  }
+
   return <Img src={image} alt={movie.title} sx={sx} />
 }
 
-export const PosterImage = ({movie, size, sx}: {movie: Movie | MovieResult, size: number, sx?: SxProps}) => {
-  return <BaseImage movie={movie} type="poster" size={size} sx={sx} />
+export const PosterTMDBImage = ({movie, size, sx}: {movie: Movie | MovieResult, size: number, sx?: SxProps}) => {
+  return <BaseTMDBImage movie={movie} type="poster" size={size} sx={sx} />
 }
 
-export const BackdropImage = ({movie, size, sx}: {movie: Movie | MovieResult, size: number, sx?: SxProps}) => {
-  return <BaseImage movie={movie} type="backdrop" size={size} sx={sx} />
+export const BackdropTMDBImage = ({movie, size, sx}: {movie: Movie | MovieResult, size: number, sx?: SxProps}) => {
+  return <BaseTMDBImage movie={movie} type="backdrop" size={size} sx={sx} />
+}
+
+export const BaseTPDBImage = ({movie, type, sx}: {movie: Data, type: 'back_image' | 'poster', sx?: SxProps}) => {
+  return <Img src={movie[type]} alt={movie.title} sx={sx} />
+}
+
+export const PosterTPDBImage = ({movie, sx}: {movie: Data, sx?: SxProps}) => {
+  return <BaseTPDBImage movie={movie} type="poster" sx={sx} />
+}
+
+export const BackdropTPDBImage = ({movie, sx}: {movie: Data, sx?: SxProps}) => {
+  return <BaseTPDBImage movie={movie} type="back_image" sx={sx} />
 }

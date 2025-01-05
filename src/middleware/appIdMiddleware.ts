@@ -22,6 +22,7 @@ export default async function appIdMiddleware(
   }
 
   const tmdbConfig = await prisma.tMDB.findFirst()
+  const tpdbConfig = await prisma.tPDB.findFirst()
 
   let APIClass = RadarrAPI
   if (app.type === 'whisparr') {
@@ -32,6 +33,7 @@ export default async function appIdMiddleware(
   req.api = new APIClass({
     apiKey: app.api_key,
     baseUrl: app.url,
-    tmdbApiKey: tmdbConfig?.key
+    tmdbApiKey: tmdbConfig?.key,
+    tpdbApiKey: tpdbConfig?.key
   })
 }

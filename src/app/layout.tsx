@@ -1,7 +1,9 @@
 import ScrollToTop from "@/components/common/ScrollToTop"
 import {TMDBApiProvider} from "@/components/TMDBApiProvider"
+import {TPDBApiProvider} from "@/components/TPDBApiProvider"
 import Version from "@/components/Version"
 import Box from "@mui/material/Box"
+import Stack from "@mui/material/Stack"
 import type {Metadata} from "next"
 import Link from "next/link"
 import {ReactNode} from "react"
@@ -31,26 +33,33 @@ export default function RootLayout({
       <ClientTheme>
         <NotificationsProvider>
           <TMDBApiProvider>
-            <Box sx={{maxWidth: 1200, margin: "10px auto"}}>
-              <Paper elevation={2} component="header" sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                p: 1,
-                mb: 2,
-              }}>
-                <Link href="/" style={{textDecoration: 'none'}}>
-                  <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
-                    Mergerr
-                    <Version/>
-                  </Typography>
-                </Link>
-                <Link href="/" passHref>
-                  <Button>Home</Button>
-                </Link>
-              </Paper>
-              {children}
-            </Box>
+            <TPDBApiProvider>
+              <Box sx={{maxWidth: 1200, margin: "10px auto"}}>
+                <Paper elevation={2} component="header" sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  p: 1,
+                  mb: 2,
+                }}>
+                  <Link href="/" style={{textDecoration: 'none'}}>
+                    <Typography variant="h6" component="div" sx={{flexGrow: 1}} color="textSecondary">
+                      Mergerr
+                      <Version/>
+                    </Typography>
+                  </Link>
+                  <Stack direction="row" spacing={1}>
+                    <Link href="/" passHref>
+                      <Button>Home</Button>
+                    </Link>
+                    <Link href="/settings" passHref>
+                      <Button>Settings</Button>
+                    </Link>
+                  </Stack>
+                </Paper>
+                {children}
+              </Box>
+            </TPDBApiProvider>
           </TMDBApiProvider>
         </NotificationsProvider>
       </ClientTheme>

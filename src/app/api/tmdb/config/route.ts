@@ -19,4 +19,11 @@ const postHandler = async (req: NextRequestWithTMDBApi) => {
   return Response.json(resp)
 }
 
+const getHandler = async () => {
+  const resp = await prisma.tMDB.findFirst()
+
+  return Response.json({key: resp?.key || ''})
+}
+
 export const POST = withTMDBApi(postHandler)
+export const GET = withTMDBApi(getHandler)

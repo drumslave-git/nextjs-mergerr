@@ -5,7 +5,7 @@ import {AxiosResponse} from "axios"
 // Define types for queue entries
 export interface QueueEntry {
   id: number;
-  movieId: number;
+  movieId?: number;
   tmdbId: number;
   title: string;
   size: number;
@@ -34,7 +34,7 @@ export interface QueueEntry {
     messages: string[];
     title: string;
   }[],
-  movie: Movie
+  movie?: Movie
 }
 
 export interface Queue {

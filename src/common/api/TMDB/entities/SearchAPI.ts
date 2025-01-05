@@ -41,7 +41,7 @@ export class SearchAPI extends BaseEntityAPI {
       page: currentPage
     })
 
-    results = resp.data.results.filter((result: Result) => result.adult)
+    results = resp.data.results.filter((result: Result) => result.adult === include_adult)
     await iterationCallback({
       ...resp,
       data: {

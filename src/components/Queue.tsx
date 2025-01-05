@@ -118,9 +118,17 @@ const AdditionalInfo = ({records, item}: { records: QueueEntry[], item: Item }) 
   </>
 }
 
-const RecordActions = ({item, onClick, children}: { records: QueueEntry[], item: Item, onClick: (queueId: number) => void, children: ReactNode }) => {
-  return <Stack onClick={() => onClick(Number(item.id))} sx={{height: '100%', cursor: 'pointer'}}>
+const RecordActions = ({item, records, onMerge, onMovieChange, children}: { records: QueueEntry[], item: Item, onMerge: (queueId: number) => void, onMovieChange: (queueId: number) => void, children: ReactNode }) => {
+  const record = useMemo(() => records.find(r => r.id === item.id) as QueueEntry, [records, item.id])
+
+  return <Stack onClick={() => onMerge(Number(item.id))} sx={{height: '100%'}}>
     {children}
+    <Stack spacing={1} direction="row" justifyContent="space-between">
+      {record.movieId && (
+        <Button variant="contained" onClick={() => onMerge(Number(item.id))}>Merge</Button>
+      )}
+      <Button color="secondary" variant="contained" onClick={() => onMovieChange(Number(item.id))}>Movie</Button>
+    </Stack>
   </Stack>
 }
 
@@ -131,6 +139,9 @@ const Details = ({id, records, appId, onClose}: {id: number | string, records: Q
   const [merge, setMerge] = useState<MergeWithInputs>()
 
   useEffect(() => {
+    if(!record.movieId) {
+      return
+    }
     fetch(`/api/app/${appId}/movie/${record.movieId}`).then(res => res.json())
       .then(setMovie)
   }, [record, appId])
@@ -141,7 +152,7 @@ const Details = ({id, records, appId, onClose}: {id: number | string, records: Q
   }, [record, appId])
 
   const moviePath = useMemo(() => {
-    return `${record.movie.path}/${record.movie.cleanTitle}.mkv`
+    return record.movie ? `${record.movie.path}/${record.movie.cleanTitle}.mkv` : null
   }, [record])
 
   const mergeStatusColor = useMemo(() => {
@@ -194,7 +205,7 @@ const Details = ({id, records, appId, onClose}: {id: number | string, records: Q
 
   return (
     <ModalPopup onClose={onClose} title={`${movie.title} (${movie.year})`}>
-      <MovieCard movie={movie} actions={(
+      <MovieCard movie={movie} provider="tmdb" actions={(
         <Button variant="contained" onClick={onMerge}>Merge</Button>
       )}>
         <Stack spacing={2}>
@@ -263,6 +274,7 @@ export default function Queue({app}: { app: App }) {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [showDetailsForID, setShowDetailsForID] = useState<number | string | null>(null)
+  const [showMovieSelectorForID, setShowMovieSelectorForID] = useState<number | string | null>(null)
 
   useEffect(() => {
     fetch(`/api/app/${app.id}/queue`).then(res => res.json())
@@ -296,7 +308,7 @@ export default function Queue({app}: { app: App }) {
     <>
       <Grid
         items={items}
-        ActionComponent={({item, children}) => <RecordActions records={records} item={item} onClick={setShowDetailsForID}>{children}</RecordActions>}
+        ActionComponent={({item, children}) => <RecordActions records={records} item={item} onMerge={setShowDetailsForID} onMovieChange={setShowDetailsForID}>{children}</RecordActions>}
         AdditionalContentComponent={({item}) => <AdditionalInfo records={records} item={item} />}
       />
       {showDetailsForID && (

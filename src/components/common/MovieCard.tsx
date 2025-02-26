@@ -46,7 +46,7 @@ export default function MovieCard({movie, provider, children, actions}: { movie:
   }, [movie])
   return (
     <>
-      <BGImage movie={movie} provider={provider} sx={{position: 'absolute', maxHeight: '50%', zIndex: 1, opacity: .5}} />
+      <BGImage movie={movie} provider={provider} sx={{position: 'absolute', maxHeight: '50%', width: '100%', zIndex: 1, opacity: .5}} />
       <Grid2 container spacing={2} padding={2} zIndex={2} position="relative">
         <Grid2 size={{xs: 12, sm: 5, md: 4}}>
           <PosterImage provider={provider} movie={movie} />

@@ -7,8 +7,7 @@ import styled from "@mui/material/styles/styled"
 import {useMemo} from "react"
 
 const Img = styled('img')(() => ({
-  width: '100%',
-  height: 'auto',
+  maxHeight: '80dvh',
   objectFit: 'cover',
   borderRadius: '4px',
 }))

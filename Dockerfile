@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:23-alpine AS base
 
 # Step 1. Rebuild the source code only when needed
 FROM base AS builder
@@ -23,7 +23,7 @@ RUN npm run build
 # Step 2. Production image, copy all the files and run next
 FROM base AS runner
 
-RUN apk add --no-cache ffmpeg shadow su-exec
+RUN apk add --no-cache ffmpeg shadow su-exec python3 py3-pip make gcc g++ libffi-dev openssl
 
 WORKDIR /app
 

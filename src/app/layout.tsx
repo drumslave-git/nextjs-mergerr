@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack"
 import type {Metadata} from "next"
 import Link from "next/link"
 import {ReactNode} from "react"
-import {AppRouterCacheProvider} from '@mui/material-nextjs/v13-appRouter'
+import {AppRouterCacheProvider} from '@mui/material-nextjs/v15-appRouter'
 import Button from "@mui/material/Button"
 import Paper from "@mui/material/Paper"
 import Typography from "@mui/material/Typography"

@@ -147,6 +147,7 @@ export interface Data {
   url: string;
   image: string;
   poster: string;
+  back_image: string;
   trailer: string;
   duration: number;
   format: string;
